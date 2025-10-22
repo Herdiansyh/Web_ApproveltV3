@@ -21,6 +21,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/Components/ui/select";
+import Sidebar from "@/Components/Sidebar";
 
 export default function Index({ auth, users, divisions, roles }) {
     const [showCreateModal, setShowCreateModal] = useState(false);
@@ -80,76 +81,82 @@ export default function Index({ auth, users, divisions, roles }) {
             }
         >
             <Head title="User Management" />
+            <div className="flex min-h-screen bg-gray-100">
+                <Sidebar />
 
-            <div className="py-12">
-                <div className="max-w-7xl mx-auto sm:px-6 lg:px-8">
-                    <Card className="p-6">
-                        <div className="flex justify-between items-center mb-6">
-                            <h3 className="text-lg font-semibold">Users</h3>
-                            <Button
-                                onClick={() => {
-                                    setEditingUser(null);
-                                    reset();
-                                    setShowCreateModal(true);
-                                }}
-                            >
-                                Add New User
-                            </Button>
-                        </div>
+                <div className="py-12 w-full">
+                    <div className="max-w-7xl mx-auto sm:px-6 lg:px-8">
+                        <Card className="p-6">
+                            <div className="flex justify-between items-center mb-6">
+                                <h3 className="text-lg font-semibold">Users</h3>
+                                <Button
+                                    onClick={() => {
+                                        setEditingUser(null);
+                                        reset();
+                                        setShowCreateModal(true);
+                                    }}
+                                >
+                                    Add New User
+                                </Button>
+                            </div>
 
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead>Name</TableHead>
-                                    <TableHead>Email</TableHead>
-                                    <TableHead>Role</TableHead>
-                                    <TableHead>Division</TableHead>
-                                    <TableHead>Actions</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {users.data.map((user) => (
-                                    <TableRow key={user.id}>
-                                        <TableCell>{user.name}</TableCell>
-                                        <TableCell>{user.email}</TableCell>
-                                        <TableCell>
-                                            {user.role.charAt(0).toUpperCase() +
-                                                user.role.slice(1)}
-                                        </TableCell>
-                                        <TableCell>
-                                            {user.division?.name || "N/A"}
-                                        </TableCell>
-                                        <TableCell>
-                                            <div className="flex space-x-2">
-                                                <Button
-                                                    variant="outline"
-                                                    size="sm"
-                                                    onClick={() =>
-                                                        handleEdit(user)
-                                                    }
-                                                >
-                                                    Edit
-                                                </Button>
-                                                {user.id !== auth.user.id && (
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>Name</TableHead>
+                                        <TableHead>Email</TableHead>
+                                        <TableHead>Role</TableHead>
+                                        <TableHead>Division</TableHead>
+                                        <TableHead>Actions</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {users.data.map((user) => (
+                                        <TableRow key={user.id}>
+                                            <TableCell>{user.name}</TableCell>
+                                            <TableCell>{user.email}</TableCell>
+                                            <TableCell>
+                                                {user.role
+                                                    .charAt(0)
+                                                    .toUpperCase() +
+                                                    user.role.slice(1)}
+                                            </TableCell>
+                                            <TableCell>
+                                                {user.division?.name || "N/A"}
+                                            </TableCell>
+                                            <TableCell>
+                                                <div className="flex space-x-2">
                                                     <Button
-                                                        variant="destructive"
+                                                        variant="outline"
                                                         size="sm"
                                                         onClick={() =>
-                                                            handleDelete(
-                                                                user.id
-                                                            )
+                                                            handleEdit(user)
                                                         }
                                                     >
-                                                        Delete
+                                                        Edit
                                                     </Button>
-                                                )}
-                                            </div>
-                                        </TableCell>
-                                    </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
-                    </Card>
+                                                    {user.id !==
+                                                        auth.user.id && (
+                                                        <Button
+                                                            variant="destructive"
+                                                            size="sm"
+                                                            onClick={() =>
+                                                                handleDelete(
+                                                                    user.id
+                                                                )
+                                                            }
+                                                        >
+                                                            Delete
+                                                        </Button>
+                                                    )}
+                                                </div>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        </Card>
+                    </div>
                 </div>
             </div>
 
