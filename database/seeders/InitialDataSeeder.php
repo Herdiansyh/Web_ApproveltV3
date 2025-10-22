@@ -13,11 +13,14 @@ class InitialDataSeeder extends Seeder
     {
         // Create divisions
         $divisions = [
-            ['name' => 'General', 'description' => 'General Division'],
+            ['name' => 'Purchasing', 'description' => 'General Division'],
+            ['name' => 'Tax', 'description' => 'General Division'],
+            ['name' => 'Accounting', 'description' => 'General Division'],
+            ['name' => 'Warehouse', 'description' => 'General Division'],
             ['name' => 'HR', 'description' => 'Human Resources'],
             ['name' => 'IT', 'description' => 'Information Technology'],
             ['name' => 'Finance', 'description' => 'Finance Department'],
-            ['name' => 'Operations', 'description' => 'Operations Department'],
+            ['name' => 'GA', 'description' => 'Operations Department'],
         ];
 
         foreach ($divisions as $division) {

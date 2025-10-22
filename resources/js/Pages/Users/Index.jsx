@@ -21,6 +21,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/Components/ui/select";
+import Sidebar from "@/Components/Sidebar";
 
 export default function Index({ auth, users, divisions, roles }) {
     const [showCreateModal, setShowCreateModal] = useState(false);
@@ -80,226 +81,237 @@ export default function Index({ auth, users, divisions, roles }) {
             }
         >
             <Head title="User Management" />
+            <div className="flex min-h-screen bg-gray-100">
+                <Sidebar />
 
-            <div className="py-12">
-                <div className="max-w-7xl mx-auto sm:px-6 lg:px-8">
-                    <Card className="p-6">
-                        <div className="flex justify-between items-center mb-6">
-                            <h3 className="text-lg font-semibold">Users</h3>
-                            <Button
-                                onClick={() => {
-                                    setEditingUser(null);
-                                    reset();
-                                    setShowCreateModal(true);
-                                }}
-                            >
-                                Add New User
-                            </Button>
-                        </div>
-
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead>Name</TableHead>
-                                    <TableHead>Email</TableHead>
-                                    <TableHead>Role</TableHead>
-                                    <TableHead>Division</TableHead>
-                                    <TableHead>Actions</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {users.data.map((user) => (
-                                    <TableRow key={user.id}>
-                                        <TableCell>{user.name}</TableCell>
-                                        <TableCell>{user.email}</TableCell>
-                                        <TableCell>
-                                            {user.role.charAt(0).toUpperCase() +
-                                                user.role.slice(1)}
-                                        </TableCell>
-                                        <TableCell>
-                                            {user.division?.name || "N/A"}
-                                        </TableCell>
-                                        <TableCell>
-                                            <div className="flex space-x-2">
-                                                <Button
-                                                    variant="outline"
-                                                    size="sm"
-                                                    onClick={() =>
-                                                        handleEdit(user)
-                                                    }
-                                                >
-                                                    Edit
-                                                </Button>
-                                                {user.id !== auth.user.id && (
-                                                    <Button
-                                                        variant="destructive"
-                                                        size="sm"
-                                                        onClick={() =>
-                                                            handleDelete(
-                                                                user.id
-                                                            )
-                                                        }
-                                                    >
-                                                        Delete
-                                                    </Button>
-                                                )}
-                                            </div>
-                                        </TableCell>
-                                    </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
-                    </Card>
-                </div>
-            </div>
-
-            {/* Create/Edit Modal */}
-            {(showCreateModal || editingUser) && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
-                    <Card className="w-full max-w-md p-6">
-                        <h3 className="text-lg font-semibold mb-4">
-                            {editingUser ? "Edit User" : "Create New User"}
-                        </h3>
-
-                        <form onSubmit={handleSubmit}>
-                            <div className="space-y-4">
-                                <div>
-                                    <Label htmlFor="name">Name</Label>
-                                    <Input
-                                        id="name"
-                                        type="text"
-                                        value={data.name}
-                                        onChange={(e) =>
-                                            setData("name", e.target.value)
-                                        }
-                                    />
-                                    {errors.name && (
-                                        <p className="text-sm text-red-600 mt-1">
-                                            {errors.name}
-                                        </p>
-                                    )}
-                                </div>
-
-                                <div>
-                                    <Label htmlFor="email">Email</Label>
-                                    <Input
-                                        id="email"
-                                        type="email"
-                                        value={data.email}
-                                        onChange={(e) =>
-                                            setData("email", e.target.value)
-                                        }
-                                    />
-                                    {errors.email && (
-                                        <p className="text-sm text-red-600 mt-1">
-                                            {errors.email}
-                                        </p>
-                                    )}
-                                </div>
-
-                                <div>
-                                    <Label htmlFor="password">
-                                        {editingUser
-                                            ? "Password (leave blank to keep current)"
-                                            : "Password"}
-                                    </Label>
-                                    <Input
-                                        id="password"
-                                        type="password"
-                                        value={data.password}
-                                        onChange={(e) =>
-                                            setData("password", e.target.value)
-                                        }
-                                    />
-                                    {errors.password && (
-                                        <p className="text-sm text-red-600 mt-1">
-                                            {errors.password}
-                                        </p>
-                                    )}
-                                </div>
-
-                                <div>
-                                    <Label htmlFor="role">Role</Label>
-                                    <Select
-                                        value={data.role}
-                                        onValueChange={(value) =>
-                                            setData("role", value)
-                                        }
-                                    >
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Select role" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {roles.map((role) => (
-                                                <SelectItem
-                                                    key={role}
-                                                    value={role}
-                                                >
-                                                    {role
-                                                        .charAt(0)
-                                                        .toUpperCase() +
-                                                        role.slice(1)}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                    {errors.role && (
-                                        <p className="text-sm text-red-600 mt-1">
-                                            {errors.role}
-                                        </p>
-                                    )}
-                                </div>
-
-                                <div>
-                                    <Label htmlFor="division">Division</Label>
-                                    <Select
-                                        value={data.division_id}
-                                        onValueChange={(value) =>
-                                            setData("division_id", value)
-                                        }
-                                    >
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Select division" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {divisions.map((division) => (
-                                                <SelectItem
-                                                    key={division.id}
-                                                    value={division.id}
-                                                >
-                                                    {division.name}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                    {errors.division_id && (
-                                        <p className="text-sm text-red-600 mt-1">
-                                            {errors.division_id}
-                                        </p>
-                                    )}
-                                </div>
-                            </div>
-
-                            <div className="flex justify-end space-x-2 mt-6">
+                <div className="py-9 w-full">
+                    <div className="max-w-7xl mx-auto sm:px-6 lg:px-8">
+                        <Card className="p-6">
+                            <div className="flex justify-between items-center mb-6">
+                                <h3 className="text-lg font-semibold">Users</h3>
                                 <Button
-                                    type="button"
-                                    variant="outline"
                                     onClick={() => {
-                                        setShowCreateModal(false);
                                         setEditingUser(null);
                                         reset();
+                                        setShowCreateModal(true);
                                     }}
                                 >
-                                    Cancel
-                                </Button>
-                                <Button type="submit" disabled={processing}>
-                                    {editingUser ? "Update" : "Create"}
+                                    Add New User
                                 </Button>
                             </div>
-                        </form>
-                    </Card>
+
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>Name</TableHead>
+                                        <TableHead>Email</TableHead>
+                                        <TableHead>Role</TableHead>
+                                        <TableHead>Division</TableHead>
+                                        <TableHead>Actions</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {users.data.map((user) => (
+                                        <TableRow key={user.id}>
+                                            <TableCell>{user.name}</TableCell>
+                                            <TableCell>{user.email}</TableCell>
+                                            <TableCell>
+                                                {user.role
+                                                    .charAt(0)
+                                                    .toUpperCase() +
+                                                    user.role.slice(1)}
+                                            </TableCell>
+                                            <TableCell>
+                                                {user.division?.name || "N/A"}
+                                            </TableCell>
+                                            <TableCell>
+                                                <div className="flex space-x-2">
+                                                    <Button
+                                                        variant="outline"
+                                                        size="sm"
+                                                        onClick={() =>
+                                                            handleEdit(user)
+                                                        }
+                                                    >
+                                                        Edit
+                                                    </Button>
+                                                    {user.id !==
+                                                        auth.user.id && (
+                                                        <Button
+                                                            variant="destructive"
+                                                            size="sm"
+                                                            onClick={() =>
+                                                                handleDelete(
+                                                                    user.id
+                                                                )
+                                                            }
+                                                        >
+                                                            Delete
+                                                        </Button>
+                                                    )}
+                                                </div>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        </Card>
+                    </div>
                 </div>
-            )}
+                {/* Create/Edit Modal */}
+                {(showCreateModal || editingUser) && (
+                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+                        <Card className="w-full max-w-md p-6">
+                            <h3 className="text-lg font-semibold mb-4">
+                                {editingUser ? "Edit User" : "Create New User"}
+                            </h3>
+
+                            <form onSubmit={handleSubmit}>
+                                <div className="space-y-4">
+                                    <div>
+                                        <Label htmlFor="name">Name</Label>
+                                        <Input
+                                            id="name"
+                                            type="text"
+                                            value={data.name}
+                                            onChange={(e) =>
+                                                setData("name", e.target.value)
+                                            }
+                                        />
+                                        {errors.name && (
+                                            <p className="text-sm text-red-600 mt-1">
+                                                {errors.name}
+                                            </p>
+                                        )}
+                                    </div>
+
+                                    <div>
+                                        <Label htmlFor="email">Email</Label>
+                                        <Input
+                                            id="email"
+                                            type="email"
+                                            value={data.email}
+                                            onChange={(e) =>
+                                                setData("email", e.target.value)
+                                            }
+                                        />
+                                        {errors.email && (
+                                            <p className="text-sm text-red-600 mt-1">
+                                                {errors.email}
+                                            </p>
+                                        )}
+                                    </div>
+
+                                    <div>
+                                        <Label htmlFor="password">
+                                            {editingUser
+                                                ? "Password (leave blank to keep current)"
+                                                : "Password"}
+                                        </Label>
+                                        <Input
+                                            id="password"
+                                            type="password"
+                                            value={data.password}
+                                            onChange={(e) =>
+                                                setData(
+                                                    "password",
+                                                    e.target.value
+                                                )
+                                            }
+                                        />
+                                        {errors.password && (
+                                            <p className="text-sm text-red-600 mt-1">
+                                                {errors.password}
+                                            </p>
+                                        )}
+                                    </div>
+
+                                    <div>
+                                        <Label htmlFor="role">Role</Label>
+                                        <Select
+                                            value={data.role}
+                                            onValueChange={(value) =>
+                                                setData("role", value)
+                                            }
+                                        >
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Select role" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {roles.map((role) => (
+                                                    <SelectItem
+                                                        key={role}
+                                                        value={role}
+                                                    >
+                                                        {role
+                                                            .charAt(0)
+                                                            .toUpperCase() +
+                                                            role.slice(1)}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                        {errors.role && (
+                                            <p className="text-sm text-red-600 mt-1">
+                                                {errors.role}
+                                            </p>
+                                        )}
+                                    </div>
+
+                                    <div>
+                                        <Label htmlFor="division">
+                                            Division
+                                        </Label>
+                                        <Select
+                                            value={data.division_id}
+                                            onValueChange={(value) => {
+                                                setData("division_id", value);
+                                                console.log(value);
+                                            }}
+                                        >
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Select division" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {divisions.map((division) => (
+                                                    <SelectItem
+                                                        key={division.id}
+                                                        value={division.id}
+                                                    >
+                                                        {division.name}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                        {errors.division_id && (
+                                            <p className="text-sm text-red-600 mt-1">
+                                                {errors.division_id}
+                                            </p>
+                                        )}
+                                    </div>
+                                </div>
+
+                                <div className="flex justify-end space-x-2 mt-6">
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        onClick={() => {
+                                            setShowCreateModal(false);
+                                            setEditingUser(null);
+                                            reset();
+                                        }}
+                                    >
+                                        Cancel
+                                    </Button>
+                                    <Button type="submit" disabled={processing}>
+                                        {editingUser ? "Update" : "Create"}
+                                    </Button>
+                                </div>
+                            </form>
+                        </Card>
+                    </div>
+                )}
+            </div>
         </AuthenticatedLayout>
     );
 }
