@@ -1,21 +1,12 @@
 import React, { useState } from "react";
 import { Button } from "./ui/button";
-import {
-    CheckCircle2,
-    FileText,
-    LogOut,
-    Menu,
-    User,
-    User2,
-} from "lucide-react";
+import { CheckCircle2, FileText, LogOut, Menu, User } from "lucide-react";
 import { Link, router, usePage } from "@inertiajs/react";
 import Modal from "./Modal";
-import NavLink from "./NavLink";
 
 export default function Sidebar() {
     const [open, setOpen] = useState(true);
     const [showingLogoutModal, setShowingLogoutModal] = useState(false);
-    const user = usePage().props.auth.user;
 
     const confirmLogout = () => {
         router.post(route("logout"));
@@ -26,15 +17,18 @@ export default function Sidebar() {
             {" "}
             {/* Sidebar */}
             <div
-                className={`bg-white  shadow-md transition-all w-20   duration-300  ${
-                    open ? "min-w-64 " : "w-20 flex flex-col items-center"
+                className={`bg-white shadow-md transition-all w-20  duration-300  ${
+                    open ? "w-64 " : "w-20 flex flex-col items-center"
                 } p-4`}
             >
-                <div
-                    className={`flex items-center  w-full ${
-                        open ? "justify-end" : "justify-center"
-                    }`}
-                >
+                <div className="flex items-center justify-between">
+                    <h1
+                        className={`font-bold text-lg  ml-3 text-gray-700 transition-all ${
+                            !open && "hidden"
+                        }`}
+                    >
+                        E-Approval
+                    </h1>
                     <button
                         variant="outline"
                         size="icon"
@@ -44,36 +38,21 @@ export default function Sidebar() {
                     </button>
                 </div>
 
-                <nav className="mt-6 space-y-5 ml-1   flex flex-col ">
-                    <NavLink
-                        className="flex items-center ml-1 w-full   gap-3 p-2 text-gray-700 hover:bg-gray-100 rounded-md"
-                        href={route("dashboard")}
-                        active={route().current("dashboard")}
+                <nav className="mt-6 space-y-3">
+                    <Link
+                        href="/dashboard"
+                        className="flex items-center gap-3 p-2 text-gray-700 hover:bg-gray-100 rounded-md"
                     >
                         <FileText className="w-5 h-5" />
-
                         {open && <span>Dashboard</span>}
-                    </NavLink>
-                    {(user.role === "employee" || user.role === "manager") && (
-                        <NavLink
-                            className="flex items-center ml-1    gap-3 p-2 text-gray-700 hover:bg-gray-100 rounded-md"
-                            href={route("submissions.index")}
-                            active={route().current("submissions.*")}
-                        >
-                            <CheckCircle2 className="w-5 h-5" />
-                            {open && <span>List permintaan persetujuan</span>}
-                        </NavLink>
-                    )}
-                    {user.role === "manager" && (
-                        <NavLink
-                            className="flex items-center ml-1 w-full   gap-3 p-2 text-gray-700 hover:bg-gray-100 rounded-md"
-                            href={route("users.index")}
-                            active={route().current("users.*")}
-                        >
-                            <User2 className="w-5 h-5" />
-                            {open && <span>User Management</span>}
-                        </NavLink>
-                    )}
+                    </Link>
+                    <Link
+                        href="/pengajuan"
+                        className="flex items-center gap-3 p-2 text-gray-700 hover:bg-gray-100 rounded-md"
+                    >
+                        <CheckCircle2 className="w-5 h-5" />
+                        {open && <span>Pengajuan</span>}
+                    </Link>
                     <button
                         onClick={() => setShowingLogoutModal(true)}
                         className="flex w-full items-center gap-3 p-2 text-gray-700 hover:bg-gray-100 rounded-md"
