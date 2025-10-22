@@ -1,0 +1,226 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Submission;
+use Illuminate\Http\Request;
+use Inertia\Inertia;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use setasign\Fpdi\Fpdi;
+
+class SubmissionController extends Controller
+{
+    use AuthorizesRequests;
+
+    public function __construct()
+    {
+        // Authorization is handled by policies and gates
+    }
+
+    public function index()
+    {
+        $user = Auth::user();
+        $submissions = Submission::when($user->role === 'employee', function ($query) {
+                $query->where('user_id', Auth::id());
+            })
+            ->latest()
+            ->paginate(10);
+
+        return Inertia::render('Submissions/Index', [
+            'submissions' => $submissions,
+            'canApprove' => $user->role === 'manager',
+            'userDivision' => $user->division
+        ]);
+    }
+
+    public function create()
+    {
+        return Inertia::render('Submissions/Create');
+    }
+
+    public function store(Request $request)
+    {
+        $request->validate([
+            'title' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'file' => 'required|file|mimes:pdf,jpg,jpeg,png|max:10240', // Max 10MB
+        ]);
+
+        $file = $request->file('file');
+        $path = $file->store('submissions', 'private');
+
+        // Ensure division_id exists: if user has none, find or create a default division
+        $divisionId = Auth::user()->division_id;
+        if (empty($divisionId)) {
+            $divisionId = DB::table('divisions')->where('name', 'General')->value('id');
+            if (empty($divisionId)) {
+                $divisionId = DB::table('divisions')->insertGetId([
+                    'name' => 'General',
+                    'description' => 'General Division',
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
+        }
+
+        $submission = Auth::user()->submissions()->create([
+            'title' => $request->title,
+            'description' => $request->description,
+            'file_path' => $path,
+            'division_id' => $divisionId,
+            'status' => 'pending'
+        ]);
+
+        return redirect()->route('submissions.show', $submission)
+            ->with('message', 'Pengajuan berhasil dibuat.');
+    }
+
+    public function show(Submission $submission)
+    {
+        if (Gate::denies('view', $submission)) {
+            abort(403);
+        }
+
+        return Inertia::render('Submissions/Show', [
+            'submission' => $submission->load(['user', 'division', 'approver']),
+            'canApprove' => Auth::user()->role === 'manager' && $submission->status === 'pending',
+            'fileUrl' => route('submissions.file', $submission),
+        ]);
+    }
+
+    public function approve(Request $request, Submission $submission)
+    {
+        if (Gate::denies('approve', $submission)) {
+            abort(403);
+        }
+
+        $request->validate([
+            'approval_note' => 'nullable|string',
+            'signature' => 'required|string', // Base64 signature data
+        ]);
+
+        // Save signature as image
+        $signatureContents = base64_decode(preg_replace('#^data:image/\w+;base64,#i', '', $request->signature));
+        $signaturePath = 'signatures/' . uniqid() . '.png';
+        Storage::disk('private')->put($signaturePath, $signatureContents);
+
+        // If original file is PDF, overlay the signature onto the PDF and save a signed copy
+        $originalPath = Storage::disk('private')->path($submission->file_path);
+        $mime = mime_content_type($originalPath);
+
+        if ($mime === 'application/pdf') {
+            // Use FPDI to import PDF and place signature image on the last page
+            $tmpSigned = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'signed_' . uniqid() . '.pdf';
+
+            try {
+                $pdf = new Fpdi();
+                $pageCount = $pdf->setSourceFile($originalPath);
+
+                for ($pageNo = 1; $pageNo <= $pageCount; $pageNo++) {
+                    $tplId = $pdf->importPage($pageNo);
+                    $size = $pdf->getTemplateSize($tplId);
+
+                    $pdf->AddPage($size['orientation'], [$size['width'], $size['height']]);
+                    $pdf->useTemplate($tplId);
+
+                    // If last page, put signature in bottom-right corner
+                    if ($pageNo === $pageCount) {
+                        // estimate position and size (points)
+                        $sigFile = tmpfile();
+                        $sigMeta = stream_get_meta_data($sigFile);
+                        $sigPathTmp = $sigMeta['uri'];
+                        file_put_contents($sigPathTmp, $signatureContents);
+
+                        // Place signature image 40mm wide, maintaining aspect
+                        $widthMm = 40;
+                        $widthPt = $widthMm * 2.83465; // mm to points
+                        $heightPt = 0; // let FPDI calculate if possible
+
+                        // Convert origin at bottom-right with 10mm margin
+                        $marginMm = 10;
+                        $x = ($size['width'] - ($widthPt + $marginMm * 2.83465));
+                        $y = ($size['height'] - ($widthPt * 0.4) - ($marginMm * 2.83465));
+
+                        try {
+                            $pdf->Image($sigPathTmp, $x, $y, $widthPt);
+                        } catch (\Exception $e) {
+                            // ignore image placement errors
+                        }
+
+                        // close and remove tmp signature file
+                        fclose($sigFile);
+                    }
+                }
+
+                $pdf->Output($tmpSigned, 'F');
+
+                $signedStoragePath = 'submissions/signed-' . uniqid() . '.pdf';
+                Storage::disk('private')->put($signedStoragePath, file_get_contents($tmpSigned));
+                @unlink($tmpSigned);
+
+                // update file_path to signed file
+                $newFilePath = $signedStoragePath;
+            } catch (\Throwable $e) {
+                // if anything fails, fall back to original file
+                $newFilePath = $submission->file_path;
+            }
+        } else {
+            $newFilePath = $submission->file_path;
+        }
+
+        $submission->update([
+            'status' => 'approved',
+            'approval_note' => $request->approval_note,
+            'signature_path' => $signaturePath,
+            'file_path' => $newFilePath,
+            'approved_at' => now(),
+            'approved_by' => Auth::id(),
+        ]);
+
+        // TODO: Send notification to submitter
+
+        return redirect()->back()
+            ->with('message', 'Dokumen berhasil disetujui.');
+    }
+
+    public function reject(Request $request, Submission $submission)
+    {
+        if (Gate::denies('reject', $submission)) {
+            abort(403);
+        }
+
+        $request->validate([
+            'approval_note' => 'required|string',
+        ]);
+
+        $submission->update([
+            'status' => 'rejected',
+            'approval_note' => $request->approval_note,
+            'approved_at' => now(),
+            'approved_by' => Auth::id(),
+        ]);
+
+        // TODO: Send notification to submitter
+
+        return redirect()->back()
+            ->with('message', 'Dokumen telah ditolak.');
+    }
+
+    public function file(Submission $submission)
+    {
+        if (Gate::denies('view', $submission)) {
+            abort(404);
+        }
+
+        $fullPath = Storage::disk('private')->path($submission->file_path);
+        if (!file_exists($fullPath)) {
+            abort(404);
+        }
+
+        return response()->file($fullPath);
+    }
+}

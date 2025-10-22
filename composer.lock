@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "aa715b4183fb30d40dbf87a9f5da20c6",
+    "content-hash": "ae93e0f14c39ba351a2482144ec922f2",
     "packages": [
         {
             "name": "brick/math",
@@ -209,6 +209,160 @@
                 "source": "https://github.com/dflydev/dflydev-dot-access-data/tree/v3.0.3"
             },
             "time": "2024-07-08T12:26:09+00:00"
+        },
+        {
+            "name": "doctrine/dbal",
+            "version": "4.3.4",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/doctrine/dbal.git",
+                "reference": "1a2fbd0e93b8dec7c3d1ac2b6396a7b929b130dc"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/doctrine/dbal/zipball/1a2fbd0e93b8dec7c3d1ac2b6396a7b929b130dc",
+                "reference": "1a2fbd0e93b8dec7c3d1ac2b6396a7b929b130dc",
+                "shasum": ""
+            },
+            "require": {
+                "doctrine/deprecations": "^1.1.5",
+                "php": "^8.2",
+                "psr/cache": "^1|^2|^3",
+                "psr/log": "^1|^2|^3"
+            },
+            "require-dev": {
+                "doctrine/coding-standard": "14.0.0",
+                "fig/log-test": "^1",
+                "jetbrains/phpstorm-stubs": "2023.2",
+                "phpstan/phpstan": "2.1.30",
+                "phpstan/phpstan-phpunit": "2.0.7",
+                "phpstan/phpstan-strict-rules": "^2",
+                "phpunit/phpunit": "11.5.23",
+                "slevomat/coding-standard": "8.24.0",
+                "squizlabs/php_codesniffer": "4.0.0",
+                "symfony/cache": "^6.3.8|^7.0",
+                "symfony/console": "^5.4|^6.3|^7.0"
+            },
+            "suggest": {
+                "symfony/console": "For helpful console commands such as SQL execution and import of files."
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Doctrine\\DBAL\\": "src"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Guilherme Blanco",
+                    "email": "guilhermeblanco@gmail.com"
+                },
+                {
+                    "name": "Roman Borschel",
+                    "email": "roman@code-factory.org"
+                },
+                {
+                    "name": "Benjamin Eberlei",
+                    "email": "kontakt@beberlei.de"
+                },
+                {
+                    "name": "Jonathan Wage",
+                    "email": "jonwage@gmail.com"
+                }
+            ],
+            "description": "Powerful PHP database abstraction layer (DBAL) with many features for database schema introspection and management.",
+            "homepage": "https://www.doctrine-project.org/projects/dbal.html",
+            "keywords": [
+                "abstraction",
+                "database",
+                "db2",
+                "dbal",
+                "mariadb",
+                "mssql",
+                "mysql",
+                "oci8",
+                "oracle",
+                "pdo",
+                "pgsql",
+                "postgresql",
+                "queryobject",
+                "sasql",
+                "sql",
+                "sqlite",
+                "sqlserver",
+                "sqlsrv"
+            ],
+            "support": {
+                "issues": "https://github.com/doctrine/dbal/issues",
+                "source": "https://github.com/doctrine/dbal/tree/4.3.4"
+            },
+            "funding": [
+                {
+                    "url": "https://www.doctrine-project.org/sponsorship.html",
+                    "type": "custom"
+                },
+                {
+                    "url": "https://www.patreon.com/phpdoctrine",
+                    "type": "patreon"
+                },
+                {
+                    "url": "https://tidelift.com/funding/github/packagist/doctrine%2Fdbal",
+                    "type": "tidelift"
+                }
+            ],
+            "time": "2025-10-09T09:11:36+00:00"
+        },
+        {
+            "name": "doctrine/deprecations",
+            "version": "1.1.5",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/doctrine/deprecations.git",
+                "reference": "459c2f5dd3d6a4633d3b5f46ee2b1c40f57d3f38"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/doctrine/deprecations/zipball/459c2f5dd3d6a4633d3b5f46ee2b1c40f57d3f38",
+                "reference": "459c2f5dd3d6a4633d3b5f46ee2b1c40f57d3f38",
+                "shasum": ""
+            },
+            "require": {
+                "php": "^7.1 || ^8.0"
+            },
+            "conflict": {
+                "phpunit/phpunit": "<=7.5 || >=13"
+            },
+            "require-dev": {
+                "doctrine/coding-standard": "^9 || ^12 || ^13",
+                "phpstan/phpstan": "1.4.10 || 2.1.11",
+                "phpstan/phpstan-phpunit": "^1.0 || ^2",
+                "phpunit/phpunit": "^7.5 || ^8.5 || ^9.6 || ^10.5 || ^11.5 || ^12",
+                "psr/log": "^1 || ^2 || ^3"
+            },
+            "suggest": {
+                "psr/log": "Allows logging deprecations via PSR-3 logger implementation"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Doctrine\\Deprecations\\": "src"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "description": "A small layer on top of trigger_error(E_USER_DEPRECATED) or PSR-3 logging with options to disable all deprecations or selectively for packages.",
+            "homepage": "https://www.doctrine-project.org/",
+            "support": {
+                "issues": "https://github.com/doctrine/deprecations/issues",
+                "source": "https://github.com/doctrine/deprecations/tree/1.1.5"
+            },
+            "time": "2025-04-07T20:06:18+00:00"
         },
         {
             "name": "doctrine/inflector",
@@ -2723,6 +2877,55 @@
             "time": "2025-08-21T11:53:16+00:00"
         },
         {
+            "name": "psr/cache",
+            "version": "3.0.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/php-fig/cache.git",
+                "reference": "aa5030cfa5405eccfdcb1083ce040c2cb8d253bf"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/php-fig/cache/zipball/aa5030cfa5405eccfdcb1083ce040c2cb8d253bf",
+                "reference": "aa5030cfa5405eccfdcb1083ce040c2cb8d253bf",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=8.0.0"
+            },
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-master": "1.0.x-dev"
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Psr\\Cache\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "PHP-FIG",
+                    "homepage": "https://www.php-fig.org/"
+                }
+            ],
+            "description": "Common interface for caching libraries",
+            "keywords": [
+                "cache",
+                "psr",
+                "psr-6"
+            ],
+            "support": {
+                "source": "https://github.com/php-fig/cache/tree/3.0.0"
+            },
+            "time": "2021-02-03T23:26:27+00:00"
+        },
+        {
             "name": "psr/clock",
             "version": "1.0.0",
             "source": {
@@ -3409,6 +3612,124 @@
                 "source": "https://github.com/ramsey/uuid/tree/4.9.1"
             },
             "time": "2025-09-04T20:59:21+00:00"
+        },
+        {
+            "name": "setasign/fpdf",
+            "version": "1.8.6",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/Setasign/FPDF.git",
+                "reference": "0838e0ee4925716fcbbc50ad9e1799b5edfae0a0"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/Setasign/FPDF/zipball/0838e0ee4925716fcbbc50ad9e1799b5edfae0a0",
+                "reference": "0838e0ee4925716fcbbc50ad9e1799b5edfae0a0",
+                "shasum": ""
+            },
+            "require": {
+                "ext-gd": "*",
+                "ext-zlib": "*"
+            },
+            "type": "library",
+            "autoload": {
+                "classmap": [
+                    "fpdf.php"
+                ]
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Olivier Plathey",
+                    "email": "oliver@fpdf.org",
+                    "homepage": "http://fpdf.org/"
+                }
+            ],
+            "description": "FPDF is a PHP class which allows to generate PDF files with pure PHP. F from FPDF stands for Free: you may use it for any kind of usage and modify it to suit your needs.",
+            "homepage": "http://www.fpdf.org",
+            "keywords": [
+                "fpdf",
+                "pdf"
+            ],
+            "support": {
+                "source": "https://github.com/Setasign/FPDF/tree/1.8.6"
+            },
+            "time": "2023-06-26T14:44:25+00:00"
+        },
+        {
+            "name": "setasign/fpdi",
+            "version": "v2.6.4",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/Setasign/FPDI.git",
+                "reference": "4b53852fde2734ec6a07e458a085db627c60eada"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/Setasign/FPDI/zipball/4b53852fde2734ec6a07e458a085db627c60eada",
+                "reference": "4b53852fde2734ec6a07e458a085db627c60eada",
+                "shasum": ""
+            },
+            "require": {
+                "ext-zlib": "*",
+                "php": "^7.1 || ^8.0"
+            },
+            "conflict": {
+                "setasign/tfpdf": "<1.31"
+            },
+            "require-dev": {
+                "phpunit/phpunit": "^7",
+                "setasign/fpdf": "~1.8.6",
+                "setasign/tfpdf": "~1.33",
+                "squizlabs/php_codesniffer": "^3.5",
+                "tecnickcom/tcpdf": "^6.8"
+            },
+            "suggest": {
+                "setasign/fpdf": "FPDI will extend this class but as it is also possible to use TCPDF or tFPDF as an alternative. There's no fixed dependency configured."
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "setasign\\Fpdi\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Jan Slabon",
+                    "email": "jan.slabon@setasign.com",
+                    "homepage": "https://www.setasign.com"
+                },
+                {
+                    "name": "Maximilian Kresse",
+                    "email": "maximilian.kresse@setasign.com",
+                    "homepage": "https://www.setasign.com"
+                }
+            ],
+            "description": "FPDI is a collection of PHP classes facilitating developers to read pages from existing PDF documents and use them as templates in FPDF. Because it is also possible to use FPDI with TCPDF, there are no fixed dependencies defined. Please see suggestions for packages which evaluates the dependencies automatically.",
+            "homepage": "https://www.setasign.com/fpdi",
+            "keywords": [
+                "fpdf",
+                "fpdi",
+                "pdf"
+            ],
+            "support": {
+                "issues": "https://github.com/Setasign/FPDI/issues",
+                "source": "https://github.com/Setasign/FPDI/tree/v2.6.4"
+            },
+            "funding": [
+                {
+                    "url": "https://tidelift.com/funding/github/packagist/setasign/fpdi",
+                    "type": "tidelift"
+                }
+            ],
+            "time": "2025-08-05T09:57:14+00:00"
         },
         {
             "name": "symfony/clock",

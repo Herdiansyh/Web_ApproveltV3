@@ -1,0 +1,144 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Submission;
+use Illuminate\Http\Request;
+use Inertia\Inertia;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\DB;
+use setasign\Fpdi\Fpdi;
+
+class SubmissionController extends Controller
+{
+    public function __construct()
+    {
+        $this->middleware('role:manager')->only(['approve', 'reject']);
+    }
+
+    public function index()
+    {
+        $user = Auth::user();
+        $submissions = Submission::with(['user', 'division', 'approver'])
+            ->when($user->role === 'employee', function ($query) {
+                $query->where('user_id', Auth::id());
+            })
+            ->latest()
+            ->paginate(10);
+
+        return Inertia::render('Submissions/Index', [
+            'submissions' => $submissions,
+            'canApprove' => $user->role === 'manager',
+            'userDivision' => $user->division
+        ]);
+    }
+
+    public function create()
+    {
+        return Inertia::render('Submissions/Create');
+    }
+
+    public function store(Request $request)
+    {
+        $request->validate([
+            'title' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'file' => 'required|file|mimes:pdf,jpg,jpeg,png|max:10240', // Max 10MB
+        ]);
+
+        $file = $request->file('file');
+        $path = $file->store('submissions', 'private');
+
+        // Ensure division_id exists: if user has none, find or create a default division
+        $divisionId = Auth::user()->division_id;
+        if (empty($divisionId)) {
+            $divisionId = DB::table('divisions')->where('name', 'General')->value('id');
+            if (empty($divisionId)) {
+                $divisionId = DB::table('divisions')->insertGetId([
+                    'name' => 'General',
+                    'description' => 'General Division',
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
+        }
+
+        $submission = Auth::user()->submissions()->create([
+            'title' => $request->title,
+            'description' => $request->description,
+            'file_path' => $path,
+            'division_id' => $divisionId,
+            'status' => 'pending'
+        ]);
+
+        return redirect()->route('submissions.show', $submission)
+            ->with('success', 'Submission created successfully.');
+    }
+
+    public function show(Submission $submission)
+    {
+        $this->authorize('view', $submission);
+
+        return Inertia::render('Submissions/Show', [
+            'submission' => $submission->load(['user', 'division', 'approver']),
+            'canApprove' => Auth::user()->role === 'manager' && $submission->status === 'pending'
+        ]);
+    }
+
+    public function approve(Request $request, Submission $submission)
+    {
+        if (Auth::user()->role !== 'manager') {
+            abort(403);
+        }
+
+        $request->validate([
+            'notes' => 'nullable|string|max:1000'
+        ]);
+
+        $submission->update([
+            'status' => 'approved',
+            'approved_at' => now(),
+            'approved_by' => Auth::id(),
+            'notes' => $request->notes
+        ]);
+
+        return redirect()->back()->with('success', 'Submission approved successfully.');
+    }
+
+    public function reject(Request $request, Submission $submission)
+    {
+        if (Auth::user()->role !== 'manager') {
+            abort(403);
+        }
+
+        $request->validate([
+            'notes' => 'required|string|max:1000'
+        ]);
+
+        $submission->update([
+            'status' => 'rejected',
+            'approved_at' => now(),
+            'approved_by' => Auth::id(),
+            'notes' => $request->notes
+        ]);
+
+        return redirect()->back()->with('success', 'Submission rejected with notes.');
+    }
+
+    public function file(Submission $submission)
+    {
+        $this->authorize('view', $submission);
+
+        if (!Storage::disk('private')->exists($submission->file_path)) {
+            abort(404);
+        }
+
+        return response()->file(
+            Storage::disk('private')->path($submission->file_path)
+        );
+    }
+
+
+}
