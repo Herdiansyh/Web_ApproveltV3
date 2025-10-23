@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Button } from "./ui/button";
 import {
     CheckCircle2,
@@ -21,6 +21,25 @@ export default function Sidebar() {
         router.post(route("logout"));
     };
     const user = usePage().props.auth.user;
+    // Mengecek ukuran layar saat pertama kali render
+    useEffect(() => {
+        const handleResize = () => {
+            if (window.innerWidth < 768) {
+                setOpen(false);
+            } else {
+                setOpen(true);
+            }
+        };
+
+        // Jalankan saat mount
+        handleResize();
+
+        // Tambahkan listener untuk resize
+        window.addEventListener("resize", handleResize);
+
+        // Cleanup listener saat unmount
+        return () => window.removeEventListener("resize", handleResize);
+    }, []);
 
     return (
         <>

@@ -19,7 +19,7 @@ export default function AuthenticatedLayout({ header, children }) {
                         <h2 className="text-xl font-semibold leading-tight text-gray-800">
                             E-Approval
                         </h2>{" "}
-                        <div className="hidden sm:flex sm:items-center">
+                        <div className=" flex items-center">
                             <div className="relative">
                                 <Dropdown>
                                     <Dropdown.Trigger>

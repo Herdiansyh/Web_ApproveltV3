@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { Head, useForm } from "@inertiajs/react";
 import { Card } from "@/Components/ui/card";
@@ -7,9 +7,10 @@ import { Input } from "@/Components/ui/input";
 import { Label } from "@/Components/ui/label";
 import { Textarea } from "@/Components/ui/textarea";
 import Sidebar from "@/Components/Sidebar";
+import Swal from "sweetalert2";
 
 export default function Create({ auth }) {
-    const { data, setData, post, processing, errors } = useForm({
+    const { data, setData, post, processing, errors, reset } = useForm({
         title: "",
         description: "",
         file: null,
@@ -17,7 +18,37 @@ export default function Create({ auth }) {
 
     const submit = (e) => {
         e.preventDefault();
-        post(route("submissions.store"));
+
+        Swal.fire({
+            title: "Konfirmasi",
+            text: "Apakah Anda yakin ingin mengirim pengajuan ini?",
+            icon: "question",
+            showCancelButton: true,
+            confirmButtonText: "Ya, kirim",
+            cancelButtonText: "Batal",
+        }).then((result) => {
+            if (result.isConfirmed) {
+                post(route("submissions.store"), {
+                    onSuccess: () => {
+                        reset(); // reset form
+                        Swal.fire({
+                            icon: "success",
+                            title: "Berhasil",
+                            text: "Pengajuan Anda telah berhasil dikirim!",
+                            timer: 2000,
+                            showConfirmButton: false,
+                        });
+                    },
+                    onError: () => {
+                        Swal.fire({
+                            icon: "error",
+                            title: "Gagal",
+                            text: "Terjadi kesalahan saat mengirim pengajuan.",
+                        });
+                    },
+                });
+            }
+        });
     };
 
     const handleFileChange = (e) => {
@@ -35,9 +66,9 @@ export default function Create({ auth }) {
         >
             <Head title="Buat Pengajuan" />
             <div className="flex min-h-screen bg-gray-100">
-                <Sidebar />{" "}
-                <div className="py-12 w-full">
-                    <div className="max-w-3xl mx-auto sm:px-6 lg:px-8">
+                <Sidebar />
+                <div className="py-12 w-full ">
+                    <div className=" mx-auto sm:px-6 lg:px-8">
                         <Card className="p-6">
                             <form onSubmit={submit}>
                                 <div className="space-y-6">

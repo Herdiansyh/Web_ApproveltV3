@@ -38,11 +38,20 @@ export default function Index({ auth, users, divisions, roles }) {
 
     const handleSubmit = (e) => {
         e.preventDefault();
+
         if (editingUser) {
             put(route("users.update", editingUser.id), {
                 onSuccess: () => {
                     setEditingUser(null);
                     reset();
+
+                    Swal.fire({
+                        icon: "success",
+                        title: "User updated",
+                        text: "The user has been successfully updated!",
+                        timer: 2000,
+                        showConfirmButton: false,
+                    });
                 },
             });
         } else {
@@ -50,6 +59,14 @@ export default function Index({ auth, users, divisions, roles }) {
                 onSuccess: () => {
                     setShowCreateModal(false);
                     reset();
+
+                    Swal.fire({
+                        icon: "success",
+                        title: "User created",
+                        text: "A new user has been successfully created!",
+                        timer: 2000,
+                        showConfirmButton: false,
+                    });
                 },
             });
         }
@@ -103,8 +120,8 @@ export default function Index({ auth, users, divisions, roles }) {
             <div className="flex min-h-screen bg-gray-100">
                 <Sidebar />
 
-                <div className="py-12 w-full">
-                    <div className="max-w-7xl mx-auto sm:px-6 lg:px-8">
+                <div className="py-12 w-full overflow-auto">
+                    <div className=" mx-auto   p-6 lg:px-8">
                         <Card className="p-6">
                             <div className="flex justify-between items-center mb-6">
                                 <h3 className="text-lg font-semibold">Users</h3>
