@@ -6,14 +6,22 @@ import { Button } from "@/Components/ui/button";
 import { Input } from "@/Components/ui/input";
 import { Label } from "@/Components/ui/label";
 import { Textarea } from "@/Components/ui/textarea";
+import {
+    Select,
+    SelectTrigger,
+    SelectValue,
+    SelectContent,
+    SelectItem,
+} from "@/Components/ui/select";
 import Sidebar from "@/Components/Sidebar";
 import Swal from "sweetalert2";
 
-export default function Create({ auth }) {
+export default function Create({ auth, divisions, userDivision }) {
     const { data, setData, post, processing, errors, reset } = useForm({
         title: "",
         description: "",
         file: null,
+        to_division_id: "",
     });
 
     const submit = (e) => {
@@ -30,7 +38,7 @@ export default function Create({ auth }) {
             if (result.isConfirmed) {
                 post(route("submissions.store"), {
                     onSuccess: () => {
-                        reset(); // reset form
+                        reset();
                         Swal.fire({
                             icon: "success",
                             title: "Berhasil",
@@ -67,11 +75,12 @@ export default function Create({ auth }) {
             <Head title="Buat Pengajuan" />
             <div className="flex min-h-screen bg-gray-100">
                 <Sidebar />
-                <div className="py-12 w-full ">
-                    <div className=" mx-auto sm:px-6 lg:px-8">
+                <div className="py-12 w-full">
+                    <div className="mx-auto sm:px-6 lg:px-8">
                         <Card className="p-6">
                             <form onSubmit={submit}>
                                 <div className="space-y-6">
+                                    {/* Judul */}
                                     <div>
                                         <Label htmlFor="title">
                                             Judul Pengajuan
@@ -91,6 +100,7 @@ export default function Create({ auth }) {
                                         )}
                                     </div>
 
+                                    {/* Deskripsi */}
                                     <div>
                                         <Label htmlFor="description">
                                             Deskripsi (Opsional)
@@ -113,6 +123,48 @@ export default function Create({ auth }) {
                                         )}
                                     </div>
 
+                                    {/* Dari Divisi (readonly info) */}
+                                    <div>
+                                        <Label>Dari Divisi</Label>
+                                        <Input
+                                            value={userDivision.name}
+                                            disabled
+                                        />
+                                    </div>
+
+                                    {/* Ke Divisi */}
+                                    <div>
+                                        <Label htmlFor="to_division_id">
+                                            Ke Divisi Tujuan
+                                        </Label>
+                                        <Select
+                                            value={data.to_division_id}
+                                            onValueChange={(value) =>
+                                                setData("to_division_id", value)
+                                            }
+                                        >
+                                            <SelectTrigger id="to_division_id">
+                                                <SelectValue placeholder="Pilih divisi tujuan" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {divisions.map((d) => (
+                                                    <SelectItem
+                                                        key={d.id}
+                                                        value={d.id.toString()}
+                                                    >
+                                                        {d.name}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                        {errors.to_division_id && (
+                                            <p className="text-sm text-red-600 mt-1">
+                                                {errors.to_division_id}
+                                            </p>
+                                        )}
+                                    </div>
+
+                                    {/* File */}
                                     <div>
                                         <Label htmlFor="file">Dokumen</Label>
                                         <Input
@@ -123,8 +175,7 @@ export default function Create({ auth }) {
                                             accept=".pdf,.jpg,.jpeg,.png"
                                         />
                                         <p className="text-sm text-gray-500 mt-1">
-                                            Format yang didukung: PDF, JPG, PNG
-                                            (Maks. 10MB)
+                                            Format: PDF, JPG, PNG (Maks. 10MB)
                                         </p>
                                         {errors.file && (
                                             <p className="text-sm text-red-600 mt-1">

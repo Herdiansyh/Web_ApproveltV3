@@ -17,9 +17,8 @@ export default function Index({ auth, submissions, canApprove }) {
             <Head title="Submissions" />
             <div className="flex min-h-screen bg-gray-100">
                 <Sidebar />
-
                 <div className="py-12 w-[100%] overflow-auto">
-                    <div className=" mx-auto sm:px-6 px-8 lg:px-8 overflow-x-auto">
+                    <div className="mx-auto sm:px-6 px-8 lg:px-8 overflow-x-auto">
                         <div className="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                             <div className="p-6 text-gray-900">
                                 {auth.user.role === "employee" && (
@@ -42,7 +41,7 @@ export default function Index({ auth, submissions, canApprove }) {
                                                     Judul
                                                 </th>
                                                 <th className="px-6 py-3 text-left">
-                                                    Divisi
+                                                    Divisi Tujuan
                                                 </th>
                                                 {auth.user.role ===
                                                     "manager" && (
@@ -79,11 +78,9 @@ export default function Index({ auth, submissions, canApprove }) {
                                                             {submission.title}
                                                         </td>
                                                         <td className="px-6 py-4">
-                                                            {
-                                                                submission
-                                                                    .division
-                                                                    .name
-                                                            }
+                                                            {submission.workflow
+                                                                ?.division_to
+                                                                ?.name || "-"}
                                                         </td>
                                                         {auth.user.role ===
                                                             "manager" && (

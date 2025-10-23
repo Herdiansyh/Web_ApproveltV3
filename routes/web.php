@@ -17,7 +17,7 @@ Route::get('/', function () {
 });
 
 // User Management Routes (Manager only)
-Route::middleware(['auth', 'role:admin'])->group(function () {
+Route::middleware(['auth', 'role:manager'])->group(function () {
     Route::get('/users', [UserController::class, 'index'])->name('users.index');
     Route::post('/users', [UserController::class, 'store'])->name('users.store');
     Route::put('/users/{user}', [UserController::class, 'update'])->name('users.update');
@@ -41,6 +41,9 @@ Route::middleware('auth')->group(function () {
     Route::middleware(['role:employee'])->group(function () {
         Route::get('submissions/create', [SubmissionController::class, 'create'])->name('submissions.create');
         Route::post('submissions', [SubmissionController::class, 'store'])->name('submissions.store');
+   Route::get('/submissions/division', [SubmissionController::class, 'forDivision'])
+    ->name('submissions.forDivision');
+
     });
 
     // Common submission routes for both employees and managers

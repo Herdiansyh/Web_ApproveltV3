@@ -69,6 +69,14 @@ export default function Sidebar() {
                         <FileText className="w-5 h-5" />
                         {open && <span>Dashboard</span>}
                     </NavLink>
+                    <NavLink
+                        href={route("submissions.forDivision")}
+                        active={route().current("submissions.forDivision")}
+                        className="flex ml-1 items-center gap-3 p-2 text-gray-700 hover:bg-gray-100 rounded-md"
+                    >
+                        <FileText className="w-5 h-5" />
+                        {open && <span>lihat list pengajuan</span>}
+                    </NavLink>
                     {(user.role === "employee" || user.role === "manager") && (
                         <NavLink
                             href={route("submissions.index")}
@@ -88,7 +96,7 @@ export default function Sidebar() {
                             )}
                         </NavLink>
                     )}{" "}
-                    {user.role === "admin" && (
+                    {user.role === "manager" && (
                         <NavLink
                             href={route("users.index")}
                             active={route().current("users.*")}

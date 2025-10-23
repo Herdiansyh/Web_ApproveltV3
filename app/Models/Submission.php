@@ -7,10 +7,10 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Submission extends Model
 {
-    protected $with = ['user', 'division', 'approver'];
+    protected $with = ['user', 'workflow', 'approver'];
     protected $fillable = [
         'user_id',
-        'division_id',
+        'workflow_id',
         'title',
         'description',
         'file_path',
@@ -35,9 +35,9 @@ class Submission extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function division(): BelongsTo
+    public function workflow(): BelongsTo
     {
-        return $this->belongsTo(Division::class);
+        return $this->belongsTo(Workflow::class);
     }
 
     public function approver(): BelongsTo

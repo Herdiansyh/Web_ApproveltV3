@@ -101,23 +101,40 @@ export default function Show({ auth, submission, fileUrl, canApprove }) {
 
     const handleReject = () => {
         if (!data.approval_note.trim()) {
-            alert("Mohon berikan alasan penolakan");
+            Swal.fire({
+                icon: "warning",
+                title: "Perhatian",
+                text: "Mohon berikan alasan penolakan",
+                confirmButtonText: "OK",
+            });
             return;
         }
 
-        post(route("submissions.reject", submission.id), {
-            onSuccess: () => {
-                setShowRejectModal(false);
-                reset();
-                Swal.fire({
-                    icon: "success",
-                    title: "Berhasil",
-                    text: "Dokumen telah ditolak",
-                    confirmButtonText: "OK",
-                }).then(() => {
-                    window.location.reload();
+        // Konfirmasi sebelum reject
+        Swal.fire({
+            title: "Apakah Anda yakin?",
+            text: "Dokumen akan ditolak!",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonText: "Ya, tolak",
+            cancelButtonText: "Batal",
+        }).then((result) => {
+            if (result.isConfirmed) {
+                post(route("submissions.reject", submission.id), {
+                    onSuccess: () => {
+                        setShowRejectModal(false);
+                        reset();
+                        Swal.fire({
+                            icon: "success",
+                            title: "Berhasil",
+                            text: "Dokumen telah ditolak",
+                            confirmButtonText: "OK",
+                        }).then(() => {
+                            window.location.reload();
+                        });
+                    },
                 });
-            },
+            }
         });
     };
 
@@ -146,7 +163,9 @@ export default function Show({ auth, submission, fileUrl, canApprove }) {
                                         <p className="text-gray-600">
                                             Diajukan oleh:{" "}
                                             {submission.user.name} (
-                                            {submission.division.name})
+                                            {submission.user.division?.name ??
+                                                "Tidak ada divisi"}
+                                            )
                                         </p>
                                         <p className="text-gray-600">
                                             Status:{" "}
