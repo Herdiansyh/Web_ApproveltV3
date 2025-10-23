@@ -17,7 +17,7 @@ Route::get('/', function () {
 });
 
 // User Management Routes (Manager only)
-Route::middleware(['auth', 'role:manager'])->group(function () {
+Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::get('/users', [UserController::class, 'index'])->name('users.index');
     Route::post('/users', [UserController::class, 'store'])->name('users.store');
     Route::put('/users/{user}', [UserController::class, 'update'])->name('users.update');

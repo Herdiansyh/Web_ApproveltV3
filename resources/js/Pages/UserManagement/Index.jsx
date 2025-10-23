@@ -212,7 +212,11 @@ export default function Index({ auth, users, divisions }) {
                                             </SelectItem>
                                             <SelectItem value="employee">
                                                 Employee
-                                            </SelectItem>
+                                            </SelectItem>{" "}
+                                            <SelectItem value="admin">
+                                                Admin
+                                            </SelectItem>{" "}
+                                            {/* tambahkan ini */}
                                         </SelectContent>
                                     </Select>
                                     {errors.role && (

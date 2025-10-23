@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
-import { Head } from "@inertiajs/react";
+import { Head, router } from "@inertiajs/react";
 import { Card } from "@/Components/ui/card";
 import { Button } from "@/Components/ui/button";
 import {
@@ -22,6 +22,7 @@ import {
     SelectValue,
 } from "@/Components/ui/select";
 import Sidebar from "@/Components/Sidebar";
+import Swal from "sweetalert2";
 
 export default function Index({ auth, users, divisions, roles }) {
     const [showCreateModal, setShowCreateModal] = useState(false);
@@ -66,9 +67,27 @@ export default function Index({ auth, users, divisions, roles }) {
     };
 
     const handleDelete = (userId) => {
-        if (confirm("Are you sure you want to delete this user?")) {
-            router.delete(route("users.destroy", userId));
-        }
+        Swal.fire({
+            title: "Are you sure?",
+            text: "You won't be able to revert this!",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#3085d6",
+            cancelButtonColor: "#d33",
+            confirmButtonText: "Yes, delete it!",
+        }).then((result) => {
+            if (result.isConfirmed) {
+                router.delete(route("users.destroy", userId), {
+                    onSuccess: () => {
+                        Swal.fire(
+                            "Deleted!",
+                            "The user has been deleted.",
+                            "success"
+                        );
+                    },
+                });
+            }
+        });
     };
 
     return (

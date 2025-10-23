@@ -57,10 +57,19 @@ export default function Sidebar() {
                             className="flex ml-1 items-center gap-3 p-2 text-gray-700 hover:bg-gray-100 rounded-md"
                         >
                             <CheckCircle2 className="w-5 h-5" />
-                            {open && <span>Pengajuan</span>}
+                            {open && (
+                                <>
+                                    {user.role === "employee" && (
+                                        <span>Pengajuan</span>
+                                    )}
+                                    {user.role === "manager" && (
+                                        <span>Lihat list Pengajuan</span>
+                                    )}
+                                </>
+                            )}
                         </NavLink>
                     )}{" "}
-                    {user.role === "manager" && (
+                    {user.role === "admin" && (
                         <NavLink
                             href={route("users.index")}
                             active={route().current("users.*")}

@@ -14,13 +14,13 @@ import Draggable from "react-draggable";
 import { ResizableBox } from "react-resizable";
 import "react-resizable/css/styles.css";
 import Sidebar from "@/Components/Sidebar";
+import Swal from "sweetalert2";
 
 export default function Show({ auth, submission, fileUrl, canApprove }) {
     const [showApproveModal, setShowApproveModal] = useState(false);
     const [showRejectModal, setShowRejectModal] = useState(false);
     const [signatureMethod, setSignatureMethod] = useState("draw");
     const [uploadedSignature, setUploadedSignature] = useState(null);
-    // New state for watermark position and size
     const [watermark, setWatermark] = useState({
         x: 50,
         y: 50,
@@ -39,11 +39,9 @@ export default function Show({ auth, submission, fileUrl, canApprove }) {
         const file = e.target.files[0];
         if (file) {
             if (file.size > 2 * 1024 * 1024) {
-                // 2MB limit
                 alert("File terlalu besar. Maksimal ukuran file adalah 2MB.");
                 return;
             }
-
             const reader = new FileReader();
             reader.onloadend = () => {
                 setUploadedSignature(reader.result);
@@ -53,11 +51,10 @@ export default function Show({ auth, submission, fileUrl, canApprove }) {
         }
     };
 
-    // Handler for drag
     const handleDrag = (e, data) => {
         setWatermark((w) => ({ ...w, x: data.x, y: data.y }));
     };
-    // Handler for resize
+
     const handleResize = (event, { size }) => {
         setWatermark((w) => ({ ...w, width: size.width, height: size.height }));
     };
@@ -90,7 +87,14 @@ export default function Show({ auth, submission, fileUrl, canApprove }) {
             onSuccess: () => {
                 setShowApproveModal(false);
                 reset();
-                window.location.reload();
+                Swal.fire({
+                    icon: "success",
+                    title: "Berhasil",
+                    text: "Dokumen telah disetujui dan ditandatangani",
+                    confirmButtonText: "OK",
+                }).then(() => {
+                    window.location.reload();
+                });
             },
         });
     };
@@ -105,7 +109,14 @@ export default function Show({ auth, submission, fileUrl, canApprove }) {
             onSuccess: () => {
                 setShowRejectModal(false);
                 reset();
-                window.location.reload();
+                Swal.fire({
+                    icon: "success",
+                    title: "Berhasil",
+                    text: "Dokumen telah ditolak",
+                    confirmButtonText: "OK",
+                }).then(() => {
+                    window.location.reload();
+                });
             },
         });
     };
@@ -121,10 +132,11 @@ export default function Show({ auth, submission, fileUrl, canApprove }) {
         >
             <Head title="Detail Pengajuan" />
             <div className="flex min-h-screen bg-gray-100">
-                <Sidebar />{" "}
+                <Sidebar />
                 <div className="py-12 w-full">
                     <div className="max-w-7xl mx-auto sm:px-6 lg:px-8">
                         <Card className="p-6">
+                            {/* Detail Submission */}
                             <div className="mb-6">
                                 <div className="flex justify-between items-start">
                                     <div>
@@ -179,28 +191,7 @@ export default function Show({ auth, submission, fileUrl, canApprove }) {
                                                 href={fileUrl}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
-                                                className="flex items-center gap-2"
                                             >
-                                                <svg
-                                                    xmlns="http://www.w3.org/2000/svg"
-                                                    width="16"
-                                                    height="16"
-                                                    viewBox="0 0 24 24"
-                                                    fill="none"
-                                                    stroke="currentColor"
-                                                    strokeWidth="2"
-                                                    strokeLinecap="round"
-                                                    strokeLinejoin="round"
-                                                >
-                                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                                                    <polyline points="7 10 12 15 17 10" />
-                                                    <line
-                                                        x1="12"
-                                                        y1="15"
-                                                        x2="12"
-                                                        y2="3"
-                                                    />
-                                                </svg>
                                                 {submission.status ===
                                                 "approved"
                                                     ? "Unduh Dokumen Bertanda Tangan"
@@ -216,79 +207,31 @@ export default function Show({ auth, submission, fileUrl, canApprove }) {
                                 )}
                             </div>
 
+                            {/* PDF Viewer */}
                             <div className="mb-6">
-                                <h4 className="font-semibold mb-2">Dokumen</h4>
-                                {submission.status !== "pending" &&
-                                    submission.approval_note && (
-                                        <div className="mb-4 p-4 border rounded-lg bg-gray-50">
-                                            <h4 className="font-semibold mb-2">
-                                                {submission.status ===
-                                                "approved"
-                                                    ? "Catatan Persetujuan:"
-                                                    : "Alasan Penolakan:"}
-                                            </h4>
-                                            <p className="text-gray-700">
-                                                {submission.approval_note}
-                                            </p>
-                                        </div>
-                                    )}
-
-                                <div className="border rounded-lg p-4 relative">
-                                    {showApproveModal &&
-                                        signatureMethod === "upload" &&
-                                        uploadedSignature && (
-                                            <Draggable
-                                                bounds="parent"
-                                                defaultPosition={{
-                                                    x: watermark.x,
-                                                    y: watermark.y,
-                                                }}
-                                                onStop={handleDrag}
-                                            >
-                                                <ResizableBox
-                                                    width={watermark.width}
-                                                    height={watermark.height}
-                                                    onResize={handleResize}
-                                                    minConstraints={[100, 50]}
-                                                    maxConstraints={[300, 150]}
-                                                    className="absolute"
-                                                    style={{ zIndex: 10 }}
-                                                >
-                                                    <div className="border-2 border-dashed border-blue-500 bg-white bg-opacity-50">
-                                                        <img
-                                                            src={
-                                                                uploadedSignature
-                                                            }
-                                                            alt="Signature Preview"
-                                                            className="w-full h-full object-contain"
-                                                        />
-                                                    </div>
-                                                </ResizableBox>
-                                            </Draggable>
-                                        )}
-                                    <object
-                                        data={fileUrl}
-                                        type="application/pdf"
-                                        className="w-full h-[600px]"
-                                    >
-                                        <div className="text-center p-4">
-                                            <p>
-                                                Tidak dapat menampilkan dokumen
-                                                secara langsung.
-                                            </p>
-                                            <a
-                                                href={fileUrl}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="text-blue-600 hover:text-blue-800"
-                                            >
-                                                Buka Dokumen
-                                            </a>
-                                        </div>
-                                    </object>
-                                </div>
+                                <object
+                                    data={fileUrl}
+                                    type="application/pdf"
+                                    className="w-full h-[600px]"
+                                >
+                                    <div className="text-center p-4">
+                                        <p>
+                                            Tidak dapat menampilkan dokumen
+                                            secara langsung.
+                                        </p>
+                                        <a
+                                            href={fileUrl}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="text-blue-600 hover:text-blue-800"
+                                        >
+                                            Buka Dokumen
+                                        </a>
+                                    </div>
+                                </object>
                             </div>
 
+                            {/* Approve / Reject Buttons */}
                             {auth.user.role === "manager" &&
                                 submission.status === "pending" && (
                                     <div className="flex justify-end space-x-4">
@@ -297,7 +240,7 @@ export default function Show({ auth, submission, fileUrl, canApprove }) {
                                             onClick={() =>
                                                 setShowRejectModal(true)
                                             }
-                                            className="bg-white hover:bg-red-50 text-red-600 hover:text-red-700 border-red-200 hover:border-red-300"
+                                            className="bg-white hover:bg-red-50 text-red-600 hover:text-red-700"
                                         >
                                             Tolak Pengajuan
                                         </Button>
@@ -319,7 +262,6 @@ export default function Show({ auth, submission, fileUrl, canApprove }) {
                                         <h3 className="text-lg font-semibold mb-4">
                                             Setujui Pengajuan
                                         </h3>
-
                                         <div className="mb-4">
                                             <label className="block text-sm font-medium mb-1">
                                                 Catatan (Opsional)
@@ -335,7 +277,6 @@ export default function Show({ auth, submission, fileUrl, canApprove }) {
                                                 rows={3}
                                             />
                                         </div>
-
                                         <div className="flex justify-end space-x-2">
                                             <Button
                                                 variant="outline"
@@ -363,7 +304,6 @@ export default function Show({ auth, submission, fileUrl, canApprove }) {
                                         <h3 className="text-lg font-semibold mb-4">
                                             Tolak Pengajuan
                                         </h3>
-
                                         <div className="mb-4">
                                             <label className="block text-sm font-medium mb-1">
                                                 Alasan Penolakan
@@ -385,7 +325,6 @@ export default function Show({ auth, submission, fileUrl, canApprove }) {
                                                 </p>
                                             )}
                                         </div>
-
                                         <div className="flex justify-end space-x-2">
                                             <Button
                                                 variant="outline"
