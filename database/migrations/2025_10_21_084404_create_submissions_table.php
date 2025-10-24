@@ -10,22 +10,32 @@ return new class extends Migration
     {
         Schema::create('submissions', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained()->onDelete('cascade'); // pembuat pengajuan
-            $table->foreignId('division_id')->constrained()->onDelete('cascade'); // divisi pembuat pengajuan
-
+            
+            // Relasi ke pembuat
+            $table->foreignId('user_id')->constrained()->onDelete('cascade');
+            $table->foreignId('division_id')->nullable()->constrained()->onDelete('cascade');
+            
             $table->string('title');
             $table->text('description')->nullable();
             $table->string('file_path');
             $table->string('signature_path')->nullable();
 
-            // kolom untuk workflow dinamis
+            // workflow dinamis
             $table->foreignId('workflow_id')->nullable()->constrained('workflows')->onDelete('set null');
             $table->integer('current_step')->default(1);
 
+            // status dan approval
             $table->enum('status', ['pending', 'approved', 'rejected'])->default('pending');
             $table->timestamp('approved_at')->nullable();
             $table->foreignId('approved_by')->nullable()->constrained('users')->onDelete('set null');
+            $table->text('approval_note')->nullable();
             $table->text('notes')->nullable();
+
+            // posisi watermark
+            $table->float('watermark_x')->nullable();
+            $table->float('watermark_y')->nullable();
+            $table->float('watermark_width')->nullable();
+            $table->float('watermark_height')->nullable();
 
             $table->timestamps();
         });

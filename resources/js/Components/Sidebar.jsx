@@ -3,10 +3,14 @@ import { Button } from "./ui/button";
 import {
     CheckCircle2,
     FileText,
+    FileType,
+    ListCheck,
     LogOut,
     Menu,
     User,
     User2,
+    User2Icon,
+    UserCircle2,
 } from "lucide-react";
 import { Link, router, usePage } from "@inertiajs/react";
 import Modal from "./Modal";
@@ -74,9 +78,19 @@ export default function Sidebar() {
                         active={route().current("submissions.forDivision")}
                         className="flex ml-1 items-center gap-3 p-2 text-gray-700 hover:bg-gray-100 rounded-md"
                     >
-                        <FileText className="w-5 h-5" />
+                        <ListCheck className="w-5 h-5" />
                         {open && <span>lihat list pengajuan</span>}
-                    </NavLink>
+                    </NavLink>{" "}
+                    {user.role === "admin" && (
+                        <NavLink
+                            href={route("divisions.index")}
+                            active={route().current("divisions.index")}
+                            className="flex ml-1 items-center gap-3 p-2 text-gray-700 hover:bg-gray-100 rounded-md"
+                        >
+                            <UserCircle2 className="w-5 h-5" />
+                            {open && <span>Division Management</span>}
+                        </NavLink>
+                    )}
                     {(user.role === "employee" || user.role === "manager") && (
                         <NavLink
                             href={route("submissions.index")}
@@ -96,7 +110,7 @@ export default function Sidebar() {
                             )}
                         </NavLink>
                     )}{" "}
-                    {user.role === "manager" && (
+                    {user.role === "admin" && (
                         <NavLink
                             href={route("users.index")}
                             active={route().current("users.*")}

@@ -24,6 +24,7 @@
     },
     "dependencies": {
         "@inertiajs/react": "^2.2.8",
+        "@radix-ui/react-dialog": "^1.1.15",
         "@radix-ui/react-label": "^2.1.7",
         "@radix-ui/react-select": "^2.2.6",
         "@radix-ui/react-slot": "^1.2.3",
@@ -31,11 +32,14 @@
         "button": "^1.1.1",
         "class-variance-authority": "^0.7.1",
         "clsx": "^2.1.1",
+        "dialog": "^0.3.1",
         "lucide-react": "^0.546.0",
+        "pdfjs-dist": "^5.4.296",
         "react-draggable": "^4.5.0",
         "react-resizable": "^3.0.5",
         "react-signature-canvas": "^1.1.0-alpha.2",
         "shad": "^1.0.0",
+        "sidebar": "^1.0.2",
         "sweetalert2": "^11.26.3",
         "tailwind-merge": "^3.3.1",
         "tailwindcss-animate": "^1.0.7"

@@ -2,24 +2,21 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Workflow extends Model
 {
+    use HasFactory;
+
     protected $fillable = [
         'name',
-        'division_from_id',
-        'division_to_id',
+        'description', // opsional
     ];
 
-    public function division_from(): BelongsTo
+    // Relasi ke langkah-langkah workflow
+    public function steps()
     {
-        return $this->belongsTo(Division::class, 'division_from_id');
-    }
-
-    public function division_to(): BelongsTo
-    {
-        return $this->belongsTo(Division::class, 'division_to_id');
+        return $this->hasMany(WorkflowStep::class)->orderBy('step_order');
     }
 }

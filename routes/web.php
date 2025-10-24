@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\DivisionController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SubmissionController;
 use App\Http\Controllers\UserController;
@@ -17,13 +18,23 @@ Route::get('/', function () {
 });
 
 // User Management Routes (Manager only)
-Route::middleware(['auth', 'role:manager'])->group(function () {
+Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::get('/users', [UserController::class, 'index'])->name('users.index');
     Route::post('/users', [UserController::class, 'store'])->name('users.store');
     Route::put('/users/{user}', [UserController::class, 'update'])->name('users.update');
     Route::delete('/users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
 });
+Route::get('/view-pdf/{filename}', function ($filename) {
+    $path = storage_path('app/private/submission/' . $filename);
 
+    if (!file_exists($path)) {
+        abort(404, 'File not found');
+    }
+
+    return response()->file($path, [
+        'Content-Type' => 'application/pdf',
+    ]);
+});
 Route::get('/dashboard', function () {
     return Inertia::render('Dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
@@ -57,6 +68,16 @@ Route::middleware('auth')->group(function () {
         Route::post('submissions/{submission}/approve', [SubmissionController::class, 'approve'])->name('submissions.approve');
         Route::post('submissions/{submission}/reject', [SubmissionController::class, 'reject'])->name('submissions.reject');
     });
+
+    //admin only
+    Route::middleware(['role:admin'])->group(function () {
+     Route::get('/divisions', [DivisionController::class, 'index'])->name('divisions.index');
+    Route::get('/divisions/create', [DivisionController::class, 'create'])->name('divisions.create');
+    Route::post('/divisions', [DivisionController::class, 'store'])->name('divisions.store');
+    Route::get('/divisions/{division}/edit', [DivisionController::class, 'edit'])->name('divisions.edit');
+    Route::put('/divisions/{division}', [DivisionController::class, 'update'])->name('divisions.update');
+    Route::delete('/divisions/{division}', [DivisionController::class, 'destroy'])->name('divisions.destroy');
+ });
 });
 
 require __DIR__.'/auth.php';

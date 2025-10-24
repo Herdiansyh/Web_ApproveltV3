@@ -7,7 +7,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Submission extends Model
 {
-    protected $with = ['user', 'workflow', 'approver'];
+    protected $with = ['user', 'workflow', 'approver', 'currentStep'];
+    
     protected $fillable = [
         'user_id',
         'workflow_id',
@@ -20,6 +21,7 @@ class Submission extends Model
         'approved_at',
         'approved_by',
         'notes',
+        'current_step', // urutan langkah sekarang
         'watermark_x',
         'watermark_y',
         'watermark_width',
@@ -43,5 +45,18 @@ class Submission extends Model
     public function approver(): BelongsTo
     {
         return $this->belongsTo(User::class, 'approved_by');
+    }
+
+    // Ambil langkah workflow saat ini
+    public function currentStep()
+    {
+        return $this->hasOneThrough(
+            WorkflowStep::class,   // model langkah
+            Workflow::class,       // model workflow
+            'id',                  // foreign key di workflow -> submission.workflow_id
+            'workflow_id',         // foreign key di workflow_step -> workflow.id
+            'workflow_id',         // local key di submission -> workflow.id
+            'id'                   // local key di workflow_step
+        )->where('step_order', $this->current_step);
     }
 }
