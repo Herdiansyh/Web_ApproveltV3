@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { Head, useForm } from "@inertiajs/react";
 import { Card } from "@/Components/ui/card";
@@ -21,18 +21,38 @@ export default function Create({ auth, divisions, userDivision }) {
         title: "",
         description: "",
         file: null,
-        to_division_id: "",
+        steps: [{ division_id: "" }], // langkah pertama wajib diisi
     });
+
+    const handleAddStep = () => {
+        setData("steps", [...data.steps, { division_id: "" }]);
+    };
+
+    const handleRemoveStep = (index) => {
+        const updatedSteps = [...data.steps];
+        updatedSteps.splice(index, 1);
+        setData("steps", updatedSteps);
+    };
+
+    const handleStepChange = (index, value) => {
+        const updatedSteps = [...data.steps];
+        updatedSteps[index].division_id = value;
+        setData("steps", updatedSteps);
+    };
+
+    const handleFileChange = (e) => {
+        setData("file", e.target.files[0]);
+    };
 
     const submit = (e) => {
         e.preventDefault();
 
         Swal.fire({
-            title: "Konfirmasi",
-            text: "Apakah Anda yakin ingin mengirim pengajuan ini?",
+            title: "Kirim Pengajuan?",
+            text: "Pastikan data sudah benar sebelum dikirim.",
             icon: "question",
             showCancelButton: true,
-            confirmButtonText: "Ya, kirim",
+            confirmButtonText: "Kirim",
             cancelButtonText: "Batal",
         }).then((result) => {
             if (result.isConfirmed) {
@@ -41,8 +61,8 @@ export default function Create({ auth, divisions, userDivision }) {
                         reset();
                         Swal.fire({
                             icon: "success",
-                            title: "Berhasil",
-                            text: "Pengajuan Anda telah berhasil dikirim!",
+                            title: "Berhasil!",
+                            text: "Pengajuan berhasil dikirim.",
                             timer: 2000,
                             showConfirmButton: false,
                         });
@@ -59,15 +79,16 @@ export default function Create({ auth, divisions, userDivision }) {
         });
     };
 
-    const handleFileChange = (e) => {
-        setData("file", e.target.files[0]);
-    };
+    // Hilangkan divisi sendiri dari daftar tujuan
+    const availableDivisions = divisions.filter(
+        (div) => div.id !== userDivision?.id
+    );
 
     return (
         <AuthenticatedLayout
             user={auth.user}
             header={
-                <h2 className="font-semibold text-xl text-gray-800 leading-tight">
+                <h2 className="font-semibold text-xl text-gray-800">
                     Buat Pengajuan Baru
                 </h2>
             }
@@ -77,16 +98,13 @@ export default function Create({ auth, divisions, userDivision }) {
                 <Sidebar />
                 <div className="py-12 w-full">
                     <div className="mx-auto sm:px-6 lg:px-8">
-                        <Card className="p-6">
+                        <Card className="p-6 shadow-md">
                             <form onSubmit={submit}>
                                 <div className="space-y-6">
                                     {/* Judul */}
                                     <div>
-                                        <Label htmlFor="title">
-                                            Judul Pengajuan
-                                        </Label>
+                                        <Label>Judul Pengajuan</Label>
                                         <Input
-                                            id="title"
                                             value={data.title}
                                             onChange={(e) =>
                                                 setData("title", e.target.value)
@@ -94,7 +112,7 @@ export default function Create({ auth, divisions, userDivision }) {
                                             required
                                         />
                                         {errors.title && (
-                                            <p className="text-sm text-red-600 mt-1">
+                                            <p className="text-red-600 text-sm">
                                                 {errors.title}
                                             </p>
                                         )}
@@ -102,11 +120,8 @@ export default function Create({ auth, divisions, userDivision }) {
 
                                     {/* Deskripsi */}
                                     <div>
-                                        <Label htmlFor="description">
-                                            Deskripsi (Opsional)
-                                        </Label>
+                                        <Label>Deskripsi (Opsional)</Label>
                                         <Textarea
-                                            id="description"
                                             value={data.description}
                                             onChange={(e) =>
                                                 setData(
@@ -116,74 +131,98 @@ export default function Create({ auth, divisions, userDivision }) {
                                             }
                                             rows={4}
                                         />
-                                        {errors.description && (
-                                            <p className="text-sm text-red-600 mt-1">
-                                                {errors.description}
-                                            </p>
-                                        )}
                                     </div>
 
-                                    {/* Dari Divisi (readonly info) */}
+                                    {/* Divisi Asal */}
                                     <div>
                                         <Label>Dari Divisi</Label>
                                         <Input
-                                            value={userDivision.name}
+                                            value={userDivision?.name || "-"}
                                             disabled
                                         />
                                     </div>
 
-                                    {/* Ke Divisi */}
+                                    {/* Workflow Steps */}
                                     <div>
-                                        <Label htmlFor="to_division_id">
-                                            Ke Divisi Tujuan
-                                        </Label>
-                                        <Select
-                                            value={data.to_division_id}
-                                            onValueChange={(value) =>
-                                                setData("to_division_id", value)
-                                            }
-                                        >
-                                            <SelectTrigger id="to_division_id">
-                                                <SelectValue placeholder="Pilih divisi tujuan" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {divisions.map((d) => (
-                                                    <SelectItem
-                                                        key={d.id}
-                                                        value={d.id.toString()}
+                                        <Label>Tujuan Workflow</Label>
+                                        {data.steps.map((step, index) => (
+                                            <div
+                                                key={index}
+                                                className="flex items-center gap-2 mt-2"
+                                            >
+                                                <Select
+                                                    value={step.division_id}
+                                                    onValueChange={(value) =>
+                                                        handleStepChange(
+                                                            index,
+                                                            value
+                                                        )
+                                                    }
+                                                >
+                                                    <SelectTrigger className="w-full">
+                                                        <SelectValue placeholder="Pilih divisi tujuan" />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        {availableDivisions.map(
+                                                            (div) => (
+                                                                <SelectItem
+                                                                    key={div.id}
+                                                                    value={div.id.toString()}
+                                                                >
+                                                                    {div.name}
+                                                                </SelectItem>
+                                                            )
+                                                        )}
+                                                    </SelectContent>
+                                                </Select>
+
+                                                {index > 0 && (
+                                                    <Button
+                                                        type="button"
+                                                        variant="destructive"
+                                                        onClick={() =>
+                                                            handleRemoveStep(
+                                                                index
+                                                            )
+                                                        }
                                                     >
-                                                        {d.name}
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-                                        {errors.to_division_id && (
-                                            <p className="text-sm text-red-600 mt-1">
-                                                {errors.to_division_id}
+                                                        Hapus
+                                                    </Button>
+                                                )}
+                                            </div>
+                                        ))}
+
+                                        <Button
+                                            type="button"
+                                            variant="secondary"
+                                            className="mt-3"
+                                            onClick={handleAddStep}
+                                        >
+                                            + Tambah Workflow
+                                        </Button>
+
+                                        {errors.steps && (
+                                            <p className="text-red-600 mt-1 text-sm">
+                                                {errors.steps}
                                             </p>
                                         )}
                                     </div>
 
-                                    {/* File */}
+                                    {/* Upload File */}
                                     <div>
-                                        <Label htmlFor="file">Dokumen</Label>
+                                        <Label>Dokumen</Label>
                                         <Input
-                                            id="file"
                                             type="file"
                                             onChange={handleFileChange}
                                             required
                                             accept=".pdf,.jpg,.jpeg,.png"
                                         />
                                         <p className="text-sm text-gray-500 mt-1">
-                                            Format: PDF, JPG, PNG (Maks. 10MB)
+                                            Format: PDF, JPG, PNG (maks. 10MB)
                                         </p>
-                                        {errors.file && (
-                                            <p className="text-sm text-red-600 mt-1">
-                                                {errors.file}
-                                            </p>
-                                        )}
                                     </div>
 
+                                    {/* Tombol Kirim */}
                                     <div className="flex justify-end">
                                         <Button
                                             type="submit"

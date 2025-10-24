@@ -94,7 +94,7 @@ export default function Sidebar() {
                     {(user.role === "employee" || user.role === "manager") && (
                         <NavLink
                             href={route("submissions.index")}
-                            active={route().current("submissions.*")}
+                            active={route().current("submissions.index")}
                             className="flex ml-1 items-center gap-3 p-2 text-gray-700 hover:bg-gray-100 rounded-md"
                         >
                             <CheckCircle2 className="w-5 h-5" />
@@ -110,6 +110,12 @@ export default function Sidebar() {
                             )}
                         </NavLink>
                     )}{" "}
+                    {/* <Link
+                        href={route("submissions.forDivision")}
+                        className="flex ml-1 items-center gap-3 p-2 text-gray-700 hover:bg-gray-100 rounded-md"
+                    >
+                        {open && <span>lihat list pengajuan</span>}
+                    </Link> */}
                     {user.role === "admin" && (
                         <NavLink
                             href={route("users.index")}

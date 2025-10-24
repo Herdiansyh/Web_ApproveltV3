@@ -60,40 +60,28 @@ export default function Show({ auth, submission, fileUrl, canApprove }) {
     };
 
     const handleApprove = () => {
-        let signature = "";
-
-        if (signatureMethod === "draw") {
-            if (signatureRef.current.isEmpty()) {
-                alert("Mohon berikan tanda tangan Anda");
-                return;
-            }
-            signature = signatureRef.current.toDataURL();
-        } else {
-            if (!uploadedSignature) {
-                alert("Mohon upload gambar tanda tangan Anda");
-                return;
-            }
-            signature = uploadedSignature;
-        }
-
         post(route("submissions.approve", submission.id), {
-            ...data,
-            signature,
-            signatureMethod,
-            watermark_x: watermark.x,
-            watermark_y: watermark.y,
-            watermark_width: watermark.width,
-            watermark_height: watermark.height,
+            data: {
+                approval_note: data.approval_note || "",
+            },
             onSuccess: () => {
                 setShowApproveModal(false);
                 reset();
                 Swal.fire({
                     icon: "success",
                     title: "Berhasil",
-                    text: "Dokumen telah disetujui dan ditandatangani",
+                    text: "Pengajuan telah disetujui.",
                     confirmButtonText: "OK",
                 }).then(() => {
                     window.location.reload();
+                });
+            },
+            onError: () => {
+                Swal.fire({
+                    icon: "error",
+                    title: "Gagal",
+                    text: "Terjadi kesalahan saat menyetujui pengajuan.",
+                    confirmButtonText: "OK",
                 });
             },
         });
@@ -225,7 +213,6 @@ export default function Show({ auth, submission, fileUrl, canApprove }) {
                                     </p>
                                 )}
                             </div>
-
                             {/* PDF Viewer */}
                             <div className="mb-6">
                                 <object
@@ -249,31 +236,26 @@ export default function Show({ auth, submission, fileUrl, canApprove }) {
                                     </div>
                                 </object>
                             </div>
-
                             {/* Approve / Reject Buttons */}
-                            {auth.user.role === "manager" &&
-                                submission.status === "pending" && (
-                                    <div className="flex justify-end space-x-4">
-                                        <Button
-                                            variant="outline"
-                                            onClick={() =>
-                                                setShowRejectModal(true)
-                                            }
-                                            className="bg-white hover:bg-red-50 text-red-600 hover:text-red-700"
-                                        >
-                                            Tolak Pengajuan
-                                        </Button>
-                                        <Button
-                                            onClick={() =>
-                                                setShowApproveModal(true)
-                                            }
-                                            className="bg-green-600 hover:bg-green-700 text-white"
-                                        >
-                                            Setujui Pengajuan
-                                        </Button>
-                                    </div>
-                                )}
-
+                            {canApprove && submission.status === "pending" && (
+                                <div className="flex justify-end space-x-4">
+                                    <Button
+                                        variant="outline"
+                                        onClick={() => setShowRejectModal(true)}
+                                        className="bg-white hover:bg-red-50 text-red-600 hover:text-red-700"
+                                    >
+                                        Tolak Pengajuan
+                                    </Button>
+                                    <Button
+                                        onClick={() =>
+                                            setShowApproveModal(true)
+                                        }
+                                        className="bg-green-600 hover:bg-green-700 text-white"
+                                    >
+                                        Setujui Pengajuan
+                                    </Button>
+                                </div>
+                            )}
                             {/* Approve Modal */}
                             {showApproveModal && (
                                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
@@ -315,7 +297,6 @@ export default function Show({ auth, submission, fileUrl, canApprove }) {
                                     </Card>
                                 </div>
                             )}
-
                             {/* Reject Modal */}
                             {showRejectModal && (
                                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">

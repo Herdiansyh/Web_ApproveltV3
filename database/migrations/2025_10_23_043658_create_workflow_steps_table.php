@@ -12,7 +12,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('workflow_id')->constrained('workflows')->onDelete('cascade');
             $table->foreignId('division_id')->constrained('divisions')->onDelete('cascade');
-            $table->integer('step_order'); // urutan proses (1, 2, 3, dst)
+            $table->integer('step_order'); // Urutan proses (1, 2, 3, dst)
             $table->timestamps();
         });
     }

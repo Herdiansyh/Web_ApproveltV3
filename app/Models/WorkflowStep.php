@@ -8,20 +8,14 @@ use Illuminate\Database\Eloquent\Model;
 class WorkflowStep extends Model
 {
     use HasFactory;
-
-    protected $fillable = [
-        'workflow_id',
-        'division_id',
-        'step_order',
+  protected $fillable = [
+        'submission_id', 'division_id', 'step_order',
+        'status', 'note', 'approved_at', 'approver_id'
     ];
 
-    public function workflow()
-    {
-        return $this->belongsTo(Workflow::class);
-    }
+    public function division() { return $this->belongsTo(\App\Models\Division::class); }
+    public function submission() { return $this->belongsTo(\App\Models\Submission::class); }
 
-    public function division()
-    {
-        return $this->belongsTo(Division::class);
-    }
 }
+
+

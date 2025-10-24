@@ -64,10 +64,10 @@ Route::middleware('auth')->group(function () {
     });
 
     // Manager-only routes
-    Route::middleware(['role:manager'])->group(function () {
-        Route::post('submissions/{submission}/approve', [SubmissionController::class, 'approve'])->name('submissions.approve');
-        Route::post('submissions/{submission}/reject', [SubmissionController::class, 'reject'])->name('submissions.reject');
-    });
+   Route::middleware(['auth'])->group(function () {
+    Route::post('submissions/{submission}/approve', [SubmissionController::class, 'approve'])->name('submissions.approve');
+    Route::post('submissions/{submission}/reject', [SubmissionController::class, 'reject'])->name('submissions.reject');
+});
 
     //admin only
     Route::middleware(['role:admin'])->group(function () {
@@ -79,5 +79,7 @@ Route::middleware('auth')->group(function () {
     Route::delete('/divisions/{division}', [DivisionController::class, 'destroy'])->name('divisions.destroy');
  });
 });
-
+Route::get('/submissions/for-division', [SubmissionController::class, 'forDivision'])
+    ->name('submissions.forDivision')
+    ->middleware('auth');
 require __DIR__.'/auth.php';

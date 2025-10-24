@@ -46,6 +46,10 @@ class Submission extends Model
     {
         return $this->belongsTo(User::class, 'approved_by');
     }
+public function workflowSteps()
+{
+    return $this->hasMany(submission_workflow_steps::class);
+}
 
     // Ambil langkah workflow saat ini
     public function currentStep()
