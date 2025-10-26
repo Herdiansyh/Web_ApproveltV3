@@ -4,6 +4,7 @@ use App\Http\Controllers\DivisionController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SubmissionController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\WorkflowController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -77,9 +78,12 @@ Route::middleware('auth')->group(function () {
     Route::get('/divisions/{division}/edit', [DivisionController::class, 'edit'])->name('divisions.edit');
     Route::put('/divisions/{division}', [DivisionController::class, 'update'])->name('divisions.update');
     Route::delete('/divisions/{division}', [DivisionController::class, 'destroy'])->name('divisions.destroy');
+       Route::get('/workflows', [WorkflowController::class, 'index'])->name('workflows.index');
+    Route::post('/workflows', [WorkflowController::class, 'store'])->name('workflows.store');
+    Route::put('/workflows/{workflow}', [WorkflowController::class, 'update'])->name('workflows.update');
+    Route::delete('/workflows/{workflow}', [WorkflowController::class, 'destroy'])->name('workflows.destroy');
+
  });
 });
-Route::get('/submissions/for-division', [SubmissionController::class, 'forDivision'])
-    ->name('submissions.forDivision')
-    ->middleware('auth');
+
 require __DIR__.'/auth.php';

@@ -1,69 +1,29 @@
-import React, { useRef, useState } from "react";
+import React, { useState } from "react";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { Head, useForm } from "@inertiajs/react";
-import PrimaryButton from "@/Components/PrimaryButton";
-import SecondaryButton from "@/Components/SecondaryButton";
-import TextInput from "@/Components/TextInput";
-import InputLabel from "@/Components/InputLabel";
-import InputError from "@/Components/InputError";
-import SignatureCanvas from "react-signature-canvas";
 import { Card } from "@/Components/ui/card";
 import { Button } from "@/Components/ui/button";
 import { Textarea } from "@/Components/ui/textarea";
-import Draggable from "react-draggable";
-import { ResizableBox } from "react-resizable";
-import "react-resizable/css/styles.css";
 import Sidebar from "@/Components/Sidebar";
 import Swal from "sweetalert2";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "@/Components/ui/dropdown-menu";
 
 export default function Show({ auth, submission, fileUrl, canApprove }) {
     const [showApproveModal, setShowApproveModal] = useState(false);
     const [showRejectModal, setShowRejectModal] = useState(false);
-    const [signatureMethod, setSignatureMethod] = useState("draw");
-    const [uploadedSignature, setUploadedSignature] = useState(null);
-    const [watermark, setWatermark] = useState({
-        x: 50,
-        y: 50,
-        width: 120,
-        height: 60,
-    });
-    const signatureRef = useRef();
-    const fileInputRef = useRef();
 
-    const { data, setData, post, processing, errors, reset } = useForm({
+    const { data, setData, post, processing, reset } = useForm({
         approval_note: "",
-        signature: "",
     });
-
-    const handleSignatureUpload = (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            if (file.size > 2 * 1024 * 1024) {
-                alert("File terlalu besar. Maksimal ukuran file adalah 2MB.");
-                return;
-            }
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                setUploadedSignature(reader.result);
-                setData("signature", reader.result);
-            };
-            reader.readAsDataURL(file);
-        }
-    };
-
-    const handleDrag = (e, data) => {
-        setWatermark((w) => ({ ...w, x: data.x, y: data.y }));
-    };
-
-    const handleResize = (event, { size }) => {
-        setWatermark((w) => ({ ...w, width: size.width, height: size.height }));
-    };
 
     const handleApprove = () => {
         post(route("submissions.approve", submission.id), {
-            data: {
-                approval_note: data.approval_note || "",
-            },
+            data: { approval_note: data.approval_note || "" },
             onSuccess: () => {
                 setShowApproveModal(false);
                 reset();
@@ -72,9 +32,7 @@ export default function Show({ auth, submission, fileUrl, canApprove }) {
                     title: "Berhasil",
                     text: "Pengajuan telah disetujui.",
                     confirmButtonText: "OK",
-                }).then(() => {
-                    window.location.reload();
-                });
+                }).then(() => window.location.reload());
             },
             onError: () => {
                 Swal.fire({
@@ -98,7 +56,6 @@ export default function Show({ auth, submission, fileUrl, canApprove }) {
             return;
         }
 
-        // Konfirmasi sebelum reject
         Swal.fire({
             title: "Apakah Anda yakin?",
             text: "Dokumen akan ditolak!",
@@ -109,6 +66,7 @@ export default function Show({ auth, submission, fileUrl, canApprove }) {
         }).then((result) => {
             if (result.isConfirmed) {
                 post(route("submissions.reject", submission.id), {
+                    data: { approval_note: data.approval_note },
                     onSuccess: () => {
                         setShowRejectModal(false);
                         reset();
@@ -117,9 +75,7 @@ export default function Show({ auth, submission, fileUrl, canApprove }) {
                             title: "Berhasil",
                             text: "Dokumen telah ditolak",
                             confirmButtonText: "OK",
-                        }).then(() => {
-                            window.location.reload();
-                        });
+                        }).then(() => window.location.reload());
                     },
                 });
             }
@@ -141,121 +97,104 @@ export default function Show({ auth, submission, fileUrl, canApprove }) {
                 <div className="py-12 w-full">
                     <div className="max-w-7xl mx-auto sm:px-6 lg:px-8">
                         <Card className="p-6">
-                            {/* Detail Submission */}
-                            <div className="mb-6">
-                                <div className="flex justify-between items-start">
-                                    <div>
-                                        <h3 className="text-2xl font-bold mb-2">
-                                            {submission.title}
-                                        </h3>
-                                        <p className="text-gray-600">
-                                            Diajukan oleh:{" "}
-                                            {submission.user.name} (
-                                            {submission.user.division?.name ??
-                                                "Tidak ada divisi"}
-                                            )
-                                        </p>
-                                        <p className="text-gray-600">
-                                            Status:{" "}
-                                            <span
-                                                className={`font-semibold ${
-                                                    submission.status ===
-                                                    "approved"
-                                                        ? "text-green-600"
-                                                        : submission.status ===
-                                                          "rejected"
-                                                        ? "text-red-600"
-                                                        : "text-yellow-600"
-                                                }`}
-                                            >
-                                                {submission.status === "pending"
-                                                    ? "Menunggu Persetujuan"
-                                                    : submission.status ===
-                                                      "approved"
-                                                    ? "Disetujui"
-                                                    : "Ditolak"}
-                                            </span>
-                                        </p>
-                                        {submission.approved_by && (
-                                            <p className="text-gray-600 mt-2">
-                                                {submission.status ===
-                                                "approved"
-                                                    ? "Disetujui"
-                                                    : "Ditolak"}{" "}
-                                                oleh: {submission.approver.name}
-                                            </p>
-                                        )}
-                                        {submission.approval_note && (
-                                            <p className="text-gray-600 mt-2">
-                                                Catatan:{" "}
-                                                {submission.approval_note}
-                                            </p>
-                                        )}
-                                    </div>
-                                    <div>
-                                        <Button asChild variant="secondary">
-                                            <a
-                                                href={fileUrl}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                            >
-                                                {submission.status ===
-                                                "approved"
-                                                    ? "Unduh Dokumen Bertanda Tangan"
-                                                    : "Unduh Dokumen"}
-                                            </a>
-                                        </Button>
-                                    </div>
-                                </div>
-                                {submission.description && (
-                                    <p className="mt-4">
-                                        {submission.description}
+                            <div className="mb-6 flex justify-between items-start">
+                                <div>
+                                    <h3 className="text-2xl font-bold mb-2">
+                                        {submission.title}
+                                    </h3>
+                                    <p className="text-gray-600">
+                                        Diajukan oleh: {submission.user.name} (
+                                        {submission.user.division?.name ?? "-"})
                                     </p>
-                                )}
-                            </div>
-                            {/* PDF Viewer */}
-                            <div className="mb-6">
-                                <object
-                                    data={fileUrl}
-                                    type="application/pdf"
-                                    className="w-full h-[600px]"
-                                >
-                                    <div className="text-center p-4">
-                                        <p>
-                                            Tidak dapat menampilkan dokumen
-                                            secara langsung.
+                                    <p className="text-gray-600">
+                                        Status:{" "}
+                                        <span
+                                            className={`font-semibold ${
+                                                submission.status === "approved"
+                                                    ? "text-green-600"
+                                                    : submission.status ===
+                                                      "rejected"
+                                                    ? "text-red-600"
+                                                    : "text-yellow-600"
+                                            }`}
+                                        >
+                                            {submission.status === "pending"
+                                                ? "Menunggu Persetujuan"
+                                                : submission.status ===
+                                                  "approved"
+                                                ? "Disetujui"
+                                                : "Ditolak"}
+                                        </span>
+                                    </p>
+                                    {submission.approved_by && (
+                                        <p className="text-gray-600 mt-2">
+                                            {submission.status === "approved"
+                                                ? "Disetujui"
+                                                : "Ditolak"}{" "}
+                                            oleh: {submission.approver.name}
                                         </p>
+                                    )}
+                                    {submission.approval_note && (
+                                        <p className="text-gray-600 mt-2">
+                                            Catatan: {submission.approval_note}
+                                        </p>
+                                    )}
+                                    {submission.description && (
+                                        <p className="mt-4">
+                                            {submission.description}
+                                        </p>
+                                    )}
+                                </div>
+                                <div className="flex flex-col gap-2">
+                                    <Button asChild variant="secondary">
                                         <a
                                             href={fileUrl}
                                             target="_blank"
                                             rel="noopener noreferrer"
-                                            className="text-blue-600 hover:text-blue-800"
                                         >
-                                            Buka Dokumen
+                                            {submission.status === "approved"
+                                                ? "Unduh Dokumen Bertanda Tangan"
+                                                : "Unduh Dokumen"}
                                         </a>
-                                    </div>
-                                </object>
-                            </div>
-                            {/* Approve / Reject Buttons */}
-                            {canApprove && submission.status === "pending" && (
-                                <div className="flex justify-end space-x-4">
-                                    <Button
-                                        variant="outline"
-                                        onClick={() => setShowRejectModal(true)}
-                                        className="bg-white hover:bg-red-50 text-red-600 hover:text-red-700"
-                                    >
-                                        Tolak Pengajuan
                                     </Button>
-                                    <Button
-                                        onClick={() =>
-                                            setShowApproveModal(true)
-                                        }
-                                        className="bg-green-600 hover:bg-green-700 text-white"
-                                    >
-                                        Setujui Pengajuan
-                                    </Button>
+                                    {canApprove &&
+                                        submission.status === "pending" && (
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger asChild>
+                                                    <Button className="bg-blue-500 text-white rounded-md">
+                                                        Action
+                                                    </Button>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent
+                                                    align="end"
+                                                    className="w-48"
+                                                >
+                                                    <DropdownMenuItem
+                                                        onClick={() =>
+                                                            setShowApproveModal(
+                                                                true
+                                                            )
+                                                        }
+                                                        className="text-green-600 hover:text-green-700 cursor-pointer border-b border-gray-200"
+                                                    >
+                                                        Setujui Pengajuan
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuItem
+                                                        onClick={() =>
+                                                            setShowRejectModal(
+                                                                true
+                                                            )
+                                                        }
+                                                        className="text-red-600 hover:text-red-700 cursor-pointer"
+                                                    >
+                                                        Tolak Pengajuan
+                                                    </DropdownMenuItem>
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
+                                        )}
                                 </div>
-                            )}
+                            </div>
+
                             {/* Approve Modal */}
                             {showApproveModal && (
                                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
@@ -297,6 +236,7 @@ export default function Show({ auth, submission, fileUrl, canApprove }) {
                                     </Card>
                                 </div>
                             )}
+
                             {/* Reject Modal */}
                             {showRejectModal && (
                                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
@@ -319,11 +259,6 @@ export default function Show({ auth, submission, fileUrl, canApprove }) {
                                                 rows={3}
                                                 required
                                             />
-                                            {errors.approval_note && (
-                                                <p className="text-sm text-red-600 mt-1">
-                                                    {errors.approval_note}
-                                                </p>
-                                            )}
                                         </div>
                                         <div className="flex justify-end space-x-2">
                                             <Button
@@ -345,6 +280,30 @@ export default function Show({ auth, submission, fileUrl, canApprove }) {
                                     </Card>
                                 </div>
                             )}
+
+                            {/* PDF Viewer */}
+                            <div className="mb-6">
+                                <object
+                                    data={fileUrl}
+                                    type="application/pdf"
+                                    className="w-full h-[600px]"
+                                >
+                                    <div className="text-center p-4">
+                                        <p>
+                                            Tidak dapat menampilkan dokumen
+                                            secara langsung.
+                                        </p>
+                                        <a
+                                            href={fileUrl}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="text-blue-600 hover:text-blue-800"
+                                        >
+                                            Buka Dokumen
+                                        </a>
+                                    </div>
+                                </object>
+                            </div>
                         </Card>
                     </div>
                 </div>

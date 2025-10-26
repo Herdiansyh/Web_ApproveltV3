@@ -14,6 +14,11 @@ return new class extends Migration
             $table->text('description')->nullable(); // Keterangan opsional
             $table->foreignId('division_from_id')->constrained('divisions')->onDelete('cascade'); // Divisi pengaju
             $table->foreignId('division_to_id')->constrained('divisions')->onDelete('cascade');   // Divisi penerima
+
+            // 🔽 Tambahan opsional (bisa kamu sesuaikan)
+            $table->boolean('is_active')->default(true); // Status aktif/tidak dari workflow
+            $table->integer('total_steps')->nullable();  // Jumlah step, untuk referensi cepat
+
             $table->timestamps();
         });
     }

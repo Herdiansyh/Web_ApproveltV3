@@ -13,6 +13,12 @@ return new class extends Migration
             $table->foreignId('workflow_id')->constrained('workflows')->onDelete('cascade');
             $table->foreignId('division_id')->constrained('divisions')->onDelete('cascade');
             $table->integer('step_order'); // Urutan proses (1, 2, 3, dst)
+
+            // 🔽 Tambahan opsional (berguna kalau kamu ingin sistem approval dinamis)
+            $table->string('role')->nullable(); // Role/divisi khusus untuk step ini
+            $table->boolean('is_final_step')->default(false); // Menandai step terakhir
+            $table->text('instructions')->nullable(); // Catatan atau petunjuk step
+
             $table->timestamps();
         });
     }

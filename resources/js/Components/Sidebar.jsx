@@ -8,6 +8,8 @@ import {
     CheckCircle2,
     LogOut,
     Menu,
+    ListChecks,
+    Workflow,
 } from "lucide-react";
 
 import {
@@ -78,6 +80,12 @@ export default function Sidebar() {
                       href: route("users.index"),
                       active: route().current("users.*"),
                       icon: <User2 className="h-5 w-5" />,
+                  },
+                  {
+                      label: "Workflow Management",
+                      href: route("workflows.index"),
+                      active: route().current("workflows.*"),
+                      icon: <Workflow className="h-5 w-5" />,
                   },
               ]
             : []),

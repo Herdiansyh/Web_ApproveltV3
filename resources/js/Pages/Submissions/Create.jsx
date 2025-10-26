@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { Head, useForm } from "@inertiajs/react";
 import { Card } from "@/Components/ui/card";
@@ -6,46 +6,43 @@ import { Button } from "@/Components/ui/button";
 import { Input } from "@/Components/ui/input";
 import { Label } from "@/Components/ui/label";
 import { Textarea } from "@/Components/ui/textarea";
-import {
-    Select,
-    SelectTrigger,
-    SelectValue,
-    SelectContent,
-    SelectItem,
-} from "@/Components/ui/select";
 import Sidebar from "@/Components/Sidebar";
 import Swal from "sweetalert2";
 
-export default function Create({ auth, divisions, userDivision }) {
+export default function Create({ auth, userDivision }) {
     const { data, setData, post, processing, errors, reset } = useForm({
         title: "",
         description: "",
         file: null,
-        steps: [{ division_id: "" }], // langkah pertama wajib diisi
     });
-    console.log("Divisions:", userDivision);
-    const handleAddStep = () => {
-        setData("steps", [...data.steps, { division_id: "" }]);
-    };
-
-    const handleRemoveStep = (index) => {
-        const updatedSteps = [...data.steps];
-        updatedSteps.splice(index, 1);
-        setData("steps", updatedSteps);
-    };
-
-    const handleStepChange = (index, value) => {
-        const updatedSteps = [...data.steps];
-        updatedSteps[index].division_id = value;
-        setData("steps", updatedSteps);
-    };
 
     const handleFileChange = (e) => {
-        setData("file", e.target.files[0]);
+        const file = e.target.files[0];
+        if (!file) return;
+
+        // Validasi ukuran file maksimal 10MB
+        if (file.size > 10 * 1024 * 1024) {
+            Swal.fire({
+                icon: "warning",
+                title: "File terlalu besar",
+                text: "Ukuran maksimal file adalah 10MB.",
+            });
+            return;
+        }
+
+        setData("file", file);
     };
 
     const submit = (e) => {
         e.preventDefault();
+
+        if (!data.file) {
+            Swal.fire({
+                icon: "warning",
+                title: "File wajib diunggah",
+            });
+            return;
+        }
 
         Swal.fire({
             title: "Kirim Pengajuan?",
@@ -57,6 +54,7 @@ export default function Create({ auth, divisions, userDivision }) {
         }).then((result) => {
             if (result.isConfirmed) {
                 post(route("submissions.store"), {
+                    forceFormData: true, // Penting agar file dikirim sebagai FormData
                     onSuccess: () => {
                         reset();
                         Swal.fire({
@@ -67,22 +65,18 @@ export default function Create({ auth, divisions, userDivision }) {
                             showConfirmButton: false,
                         });
                     },
-                    onError: () => {
+                    onError: (err) => {
+                        console.error("Error saat submit:", err); // <-- ini untuk debug
                         Swal.fire({
                             icon: "error",
                             title: "Gagal",
-                            text: "Terjadi kesalahan saat mengirim pengajuan.",
+                            text: "Terjadi kesalahan saat mengirim pengajuan. Cek console untuk detail.",
                         });
                     },
                 });
             }
         });
     };
-
-    // Hilangkan divisi sendiri dari daftar tujuan
-    const availableDivisions = divisions.filter(
-        (div) => div.id !== userDivision?.id
-    );
 
     return (
         <AuthenticatedLayout
@@ -99,7 +93,10 @@ export default function Create({ auth, divisions, userDivision }) {
                 <div className="py-12 w-full">
                     <div className="mx-auto sm:px-6 lg:px-8">
                         <Card className="p-6 shadow-md">
-                            <form onSubmit={submit}>
+                            <form
+                                onSubmit={submit}
+                                encType="multipart/form-data"
+                            >
                                 <div className="space-y-6">
                                     {/* Judul */}
                                     <div>
@@ -142,72 +139,6 @@ export default function Create({ auth, divisions, userDivision }) {
                                         />
                                     </div>
 
-                                    {/* Workflow Steps */}
-                                    <div>
-                                        <Label>Tujuan Workflow</Label>
-                                        {data.steps.map((step, index) => (
-                                            <div
-                                                key={index}
-                                                className="flex items-center gap-2 mt-2"
-                                            >
-                                                <Select
-                                                    value={step.division_id}
-                                                    onValueChange={(value) =>
-                                                        handleStepChange(
-                                                            index,
-                                                            value
-                                                        )
-                                                    }
-                                                >
-                                                    <SelectTrigger className="w-full">
-                                                        <SelectValue placeholder="Pilih divisi tujuan" />
-                                                    </SelectTrigger>
-                                                    <SelectContent>
-                                                        {availableDivisions.map(
-                                                            (div) => (
-                                                                <SelectItem
-                                                                    key={div.id}
-                                                                    value={div.id.toString()}
-                                                                >
-                                                                    {div.name}
-                                                                </SelectItem>
-                                                            )
-                                                        )}
-                                                    </SelectContent>
-                                                </Select>
-
-                                                {index > 0 && (
-                                                    <Button
-                                                        type="button"
-                                                        variant="destructive"
-                                                        onClick={() =>
-                                                            handleRemoveStep(
-                                                                index
-                                                            )
-                                                        }
-                                                    >
-                                                        Hapus
-                                                    </Button>
-                                                )}
-                                            </div>
-                                        ))}
-
-                                        <Button
-                                            type="button"
-                                            variant="secondary"
-                                            className="mt-3"
-                                            onClick={handleAddStep}
-                                        >
-                                            + Tambah Workflow
-                                        </Button>
-
-                                        {errors.steps && (
-                                            <p className="text-red-600 mt-1 text-sm">
-                                                {errors.steps}
-                                            </p>
-                                        )}
-                                    </div>
-
                                     {/* Upload File */}
                                     <div>
                                         <Label>Dokumen</Label>
@@ -220,6 +151,11 @@ export default function Create({ auth, divisions, userDivision }) {
                                         <p className="text-sm text-gray-500 mt-1">
                                             Format: PDF, JPG, PNG (maks. 10MB)
                                         </p>
+                                        {errors.file && (
+                                            <p className="text-red-600 text-sm mt-1">
+                                                {errors.file}
+                                            </p>
+                                        )}
                                     </div>
 
                                     {/* Tombol Kirim */}
@@ -227,9 +163,7 @@ export default function Create({ auth, divisions, userDivision }) {
                                         <Button
                                             type="submit"
                                             disabled={processing}
-                                            style={{
-                                                borderRadius: "15px",
-                                            }}
+                                            style={{ borderRadius: "15px" }}
                                             className="hover:bg-gray-700"
                                         >
                                             {processing

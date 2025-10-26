@@ -5,7 +5,7 @@ import PrimaryButton from "@/Components/PrimaryButton";
 import Sidebar from "@/Components/Sidebar";
 import { TooltipProvider } from "@/Components/ui/tooltip";
 
-export default function Index({ auth, submissions, canApprove }) {
+export default function Index({ auth, submissions }) {
     return (
         <AuthenticatedLayout
             user={auth.user}
@@ -20,20 +20,17 @@ export default function Index({ auth, submissions, canApprove }) {
                 <TooltipProvider>
                     <Sidebar />
                 </TooltipProvider>
-                <div className="py-12 w-[100%] overflow-auto">
+                <div className="py-12 w-full overflow-auto">
                     <div className="mx-auto sm:px-6 px-8 lg:px-8 overflow-x-auto">
                         <div className="bg-card text-card-foreground overflow-hidden shadow-md sm:rounded-lg">
                             <div className="p-6">
                                 {auth.user.role === "employee" && (
-                                    <div className="mb-6">
+                                    <div className="mb-6 flex justify-end">
                                         <Link
                                             href={route("submissions.create")}
-                                            className="w-full flex justify-end"
                                         >
                                             <PrimaryButton
-                                                style={{
-                                                    borderRadius: "15px",
-                                                }}
+                                                style={{ borderRadius: "15px" }}
                                                 className="bg-primary !text-[0.6rem] text-primary-foreground hover:bg-primary/90"
                                             >
                                                 Buat Pengajuan Baru
@@ -50,7 +47,7 @@ export default function Index({ auth, submissions, canApprove }) {
                                                     Judul
                                                 </th>
                                                 <th className="px-6 py-3 text-left">
-                                                    Divisi Tujuan
+                                                    Workflow / Divisi Tujuan
                                                 </th>
                                                 {auth.user.role ===
                                                     "manager" && (
@@ -71,107 +68,123 @@ export default function Index({ auth, submissions, canApprove }) {
                                         </thead>
                                         <tbody className="divide-y divide-border">
                                             {submissions.data.map(
-                                                (submission) => (
-                                                    <tr
-                                                        key={submission.id}
-                                                        className={
-                                                            submission.status ===
-                                                                "pending" &&
-                                                            auth.user.role ===
-                                                                "manager"
-                                                                ? "bg-accent/20"
-                                                                : ""
-                                                        }
-                                                    >
-                                                        <td className="px-6 py-4">
-                                                            {submission.title}
-                                                        </td>
-                                                        <td className="px-6 py-4">
-                                                            {submission.workflow
-                                                                ?.division_to
-                                                                ?.name || "-"}
-                                                        </td>
-                                                        {auth.user.role ===
-                                                            "manager" && (
+                                                (submission) => {
+                                                    const currentStep =
+                                                        submission.workflowSteps?.find(
+                                                            (s) =>
+                                                                s.step_order ===
+                                                                submission.current_step
+                                                        );
+                                                    return (
+                                                        <tr
+                                                            key={submission.id}
+                                                            className={
+                                                                submission.status ===
+                                                                    "pending" &&
+                                                                auth.user
+                                                                    .role ===
+                                                                    "manager"
+                                                                    ? "bg-accent/20"
+                                                                    : ""
+                                                            }
+                                                        >
                                                             <td className="px-6 py-4">
                                                                 {
-                                                                    submission
-                                                                        .user
-                                                                        .name
+                                                                    submission.title
                                                                 }
                                                             </td>
-                                                        )}
-                                                        <td className="px-6 py-4">
-                                                            <span
-                                                                className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                                                    submission.status ===
-                                                                    "approved"
-                                                                        ? "bg-green-100 text-green-800"
-                                                                        : submission.status ===
-                                                                          "rejected"
-                                                                        ? "bg-destructive text-destructive-foreground"
-                                                                        : "bg-yellow-100 text-yellow-800"
-                                                                }`}
-                                                            >
-                                                                {submission.status ===
-                                                                "pending"
-                                                                    ? "Menunggu Persetujuan"
-                                                                    : submission.status ===
-                                                                      "approved"
-                                                                    ? "Disetujui"
-                                                                    : "Ditolak"}
-                                                            </span>
-                                                        </td>
-                                                        <td className="px-6 py-4">
-                                                            {new Date(
-                                                                submission.created_at
-                                                            ).toLocaleDateString(
-                                                                "id-ID"
+                                                            <td className="px-6 py-4">
+                                                                {currentStep
+                                                                    ?.division
+                                                                    ?.name ||
+                                                                    submission
+                                                                        .workflow
+                                                                        ?.division_to
+                                                                        ?.name ||
+                                                                    "-"}
+                                                            </td>
+                                                            {auth.user.role ===
+                                                                "manager" && (
+                                                                <td className="px-6 py-4">
+                                                                    {
+                                                                        submission
+                                                                            .user
+                                                                            .name
+                                                                    }
+                                                                </td>
                                                             )}
-                                                        </td>
-                                                        <td className="px-6 py-4 text-center">
-                                                            <div className="flex justify-center space-x-2">
-                                                                <Link
-                                                                    href={route(
-                                                                        "submissions.show",
-                                                                        submission.id
-                                                                    )}
-                                                                    className="text-primary hover:text-primary/90"
+                                                            <td className="px-6 py-4">
+                                                                <span
+                                                                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                                                        submission.status ===
+                                                                        "approved"
+                                                                            ? "bg-green-100 text-green-800"
+                                                                            : submission.status ===
+                                                                              "rejected"
+                                                                            ? "bg-destructive text-destructive-foreground"
+                                                                            : "bg-yellow-100 text-yellow-800"
+                                                                    }`}
                                                                 >
-                                                                    {auth.user
-                                                                        .role ===
-                                                                        "manager" &&
-                                                                    submission.status ===
-                                                                        "pending"
-                                                                        ? "Review"
-                                                                        : "Lihat"}
-                                                                </Link>
-                                                            </div>
-                                                        </td>
-                                                    </tr>
-                                                )
+                                                                    {submission.status ===
+                                                                    "pending"
+                                                                        ? "Menunggu Persetujuan"
+                                                                        : submission.status ===
+                                                                          "approved"
+                                                                        ? "Disetujui"
+                                                                        : "Ditolak"}
+                                                                </span>
+                                                            </td>
+                                                            <td className="px-6 py-4">
+                                                                {new Date(
+                                                                    submission.created_at
+                                                                ).toLocaleDateString(
+                                                                    "id-ID"
+                                                                )}
+                                                            </td>
+                                                            <td className="px-6 py-4 text-center">
+                                                                <div className="flex justify-center space-x-2">
+                                                                    <Link
+                                                                        href={route(
+                                                                            "submissions.show",
+                                                                            submission.id
+                                                                        )}
+                                                                        className="text-primary hover:text-primary/90"
+                                                                    >
+                                                                        {submission.status ===
+                                                                            "pending" &&
+                                                                        auth
+                                                                            .user
+                                                                            .role ===
+                                                                            "manager"
+                                                                            ? "Review"
+                                                                            : "Lihat"}
+                                                                    </Link>
+                                                                </div>
+                                                            </td>
+                                                        </tr>
+                                                    );
+                                                }
                                             )}
                                         </tbody>
                                     </table>
                                 </div>
 
                                 {/* Pagination */}
-                                <div className="mt-6">
-                                    {submissions.links &&
-                                        submissions.links.map((link, index) => (
-                                            <Link
-                                                key={index}
-                                                href={link.url || "#"}
-                                                className={`px-3 py-1 mx-1 rounded ${
-                                                    link.active
-                                                        ? "bg-primary text-primary-foreground"
-                                                        : "text-muted-foreground hover:text-primary"
-                                                }`}
-                                                dangerouslySetInnerHTML={{
-                                                    __html: link.label,
-                                                }}
-                                            />
-                                        ))}
+                                <div className="mt-6 flex justify-center">
+                                    {submissions.links?.map((link, index) => (
+                                        <Link
+                                            key={index}
+                                            href={link.url || "#"}
+                                            className={`px-3 py-1 mx-1 rounded ${
+                                                link.active
+                                                    ? "bg-primary text-primary-foreground"
+                                                    : "text-muted-foreground hover:text-primary"
+                                            }`}
+                                            dangerouslySetInnerHTML={{
+                                                __html: link.label,
+                                            }}
+                                        />
+                                    ))}
                                 </div>
                             </div>
                         </div>
