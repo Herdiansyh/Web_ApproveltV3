@@ -131,6 +131,9 @@ export default function Index({ auth, users, divisions, roles }) {
                                         reset();
                                         setShowCreateModal(true);
                                     }}
+                                    style={{
+                                        borderRadius: "15px",
+                                    }}
                                 >
                                     Add New User
                                 </Button>
@@ -168,6 +171,10 @@ export default function Index({ auth, users, divisions, roles }) {
                                                         onClick={() =>
                                                             handleEdit(user)
                                                         }
+                                                        style={{
+                                                            borderRadius:
+                                                                "15px",
+                                                        }}
                                                     >
                                                         Edit
                                                     </Button>
@@ -181,6 +188,10 @@ export default function Index({ auth, users, divisions, roles }) {
                                                                     user.id
                                                                 )
                                                             }
+                                                            style={{
+                                                                borderRadius:
+                                                                    "15px",
+                                                            }}
                                                         >
                                                             Delete
                                                         </Button>
@@ -332,10 +343,19 @@ export default function Index({ auth, users, divisions, roles }) {
                                         setEditingUser(null);
                                         reset();
                                     }}
+                                    style={{
+                                        borderRadius: "15px",
+                                    }}
                                 >
                                     Cancel
                                 </Button>
-                                <Button type="submit" disabled={processing}>
+                                <Button
+                                    type="submit"
+                                    disabled={processing}
+                                    style={{
+                                        borderRadius: "15px",
+                                    }}
+                                >
                                     {editingUser ? "Update" : "Create"}
                                 </Button>
                             </div>

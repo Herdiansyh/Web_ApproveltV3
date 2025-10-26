@@ -55,6 +55,7 @@ public function create()
 
     return Inertia::render('Submissions/Create', [
         'divisions' => $divisions,
+        'userDivision' => Auth::user()->division,
     ]);
 }
 
@@ -197,7 +198,7 @@ public function approve(Request $request, Submission $submission)
     // Simpan tanda tangan
     $signatureContents = base64_decode(preg_replace('#^data:image/\w+;base64,#i', '', $request->signature));
     $signaturePath = 'signatures/' . uniqid() . '.png';
-    \Storage::disk('private')->put($signaturePath, $signatureContents);
+    Storage::disk('private')->put($signaturePath, $signatureContents);
 
     // Tandai step aktif sebagai approved
     $currentStep->update([

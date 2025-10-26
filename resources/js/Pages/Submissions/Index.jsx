@@ -3,30 +3,39 @@ import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { Head, Link } from "@inertiajs/react";
 import PrimaryButton from "@/Components/PrimaryButton";
 import Sidebar from "@/Components/Sidebar";
+import { TooltipProvider } from "@/Components/ui/tooltip";
 
 export default function Index({ auth, submissions, canApprove }) {
     return (
         <AuthenticatedLayout
             user={auth.user}
             header={
-                <h2 className="font-semibold text-xl text-gray-800 leading-tight">
+                <h2 className="font-semibold text-xl text-foreground leading-tight">
                     Submissions
                 </h2>
             }
         >
             <Head title="Submissions" />
-            <div className="flex min-h-screen bg-gray-100">
-                <Sidebar />
+            <div className="flex min-h-screen bg-background text-foreground">
+                <TooltipProvider>
+                    <Sidebar />
+                </TooltipProvider>
                 <div className="py-12 w-[100%] overflow-auto">
                     <div className="mx-auto sm:px-6 px-8 lg:px-8 overflow-x-auto">
-                        <div className="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                            <div className="p-6 text-gray-900">
+                        <div className="bg-card text-card-foreground overflow-hidden shadow-md sm:rounded-lg">
+                            <div className="p-6">
                                 {auth.user.role === "employee" && (
                                     <div className="mb-6">
                                         <Link
                                             href={route("submissions.create")}
+                                            className="w-full flex justify-end"
                                         >
-                                            <PrimaryButton>
+                                            <PrimaryButton
+                                                style={{
+                                                    borderRadius: "15px",
+                                                }}
+                                                className="bg-primary !text-[0.6rem] text-primary-foreground hover:bg-primary/90"
+                                            >
                                                 Buat Pengajuan Baru
                                             </PrimaryButton>
                                         </Link>
@@ -36,7 +45,7 @@ export default function Index({ auth, submissions, canApprove }) {
                                 <div className="overflow-x-auto">
                                     <table className="w-full text-sm">
                                         <thead>
-                                            <tr className="bg-gray-50">
+                                            <tr className="bg-muted text-muted-foreground">
                                                 <th className="px-6 py-3 text-left">
                                                     Judul
                                                 </th>
@@ -60,7 +69,7 @@ export default function Index({ auth, submissions, canApprove }) {
                                                 </th>
                                             </tr>
                                         </thead>
-                                        <tbody className="divide-y divide-gray-200">
+                                        <tbody className="divide-y divide-border">
                                             {submissions.data.map(
                                                 (submission) => (
                                                     <tr
@@ -70,7 +79,7 @@ export default function Index({ auth, submissions, canApprove }) {
                                                                 "pending" &&
                                                             auth.user.role ===
                                                                 "manager"
-                                                                ? "bg-yellow-50"
+                                                                ? "bg-accent/20"
                                                                 : ""
                                                         }
                                                     >
@@ -100,7 +109,7 @@ export default function Index({ auth, submissions, canApprove }) {
                                                                         ? "bg-green-100 text-green-800"
                                                                         : submission.status ===
                                                                           "rejected"
-                                                                        ? "bg-red-100 text-red-800"
+                                                                        ? "bg-destructive text-destructive-foreground"
                                                                         : "bg-yellow-100 text-yellow-800"
                                                                 }`}
                                                             >
@@ -127,7 +136,7 @@ export default function Index({ auth, submissions, canApprove }) {
                                                                         "submissions.show",
                                                                         submission.id
                                                                     )}
-                                                                    className="text-blue-600 hover:text-blue-800"
+                                                                    className="text-primary hover:text-primary/90"
                                                                 >
                                                                     {auth.user
                                                                         .role ===
@@ -153,10 +162,10 @@ export default function Index({ auth, submissions, canApprove }) {
                                             <Link
                                                 key={index}
                                                 href={link.url || "#"}
-                                                className={`px-3 py-1 mx-1 ${
+                                                className={`px-3 py-1 mx-1 rounded ${
                                                     link.active
-                                                        ? "bg-blue-500 text-white"
-                                                        : "text-gray-600 hover:text-blue-500"
+                                                        ? "bg-primary text-primary-foreground"
+                                                        : "text-muted-foreground hover:text-primary"
                                                 }`}
                                                 dangerouslySetInnerHTML={{
                                                     __html: link.label,

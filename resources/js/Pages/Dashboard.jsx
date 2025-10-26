@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/Components/ui/card";
 import Modal from "@/Components/Modal";
 import { useState } from "react";
 import Sidebar from "@/Components/Sidebar";
+import { TooltipProvider } from "@/Components/ui/tooltip";
 
 export default function Dashboard({ auth }) {
     return (
@@ -17,7 +18,9 @@ export default function Dashboard({ auth }) {
             <Head title="Dashboard" />
 
             <div className="flex min-h-screen bg-gray-100">
-                <Sidebar />
+                <TooltipProvider>
+                    <Sidebar />
+                </TooltipProvider>
 
                 {/* Main Content */}
                 <div className="space-y-6 p-10">

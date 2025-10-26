@@ -23,7 +23,7 @@ export default function Create({ auth, divisions, userDivision }) {
         file: null,
         steps: [{ division_id: "" }], // langkah pertama wajib diisi
     });
-
+    console.log("Divisions:", userDivision);
     const handleAddStep = () => {
         setData("steps", [...data.steps, { division_id: "" }]);
     };
@@ -227,6 +227,10 @@ export default function Create({ auth, divisions, userDivision }) {
                                         <Button
                                             type="submit"
                                             disabled={processing}
+                                            style={{
+                                                borderRadius: "15px",
+                                            }}
+                                            className="hover:bg-gray-700"
                                         >
                                             {processing
                                                 ? "Mengirim..."

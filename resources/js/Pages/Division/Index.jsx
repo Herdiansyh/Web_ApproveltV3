@@ -72,6 +72,9 @@ export default function Index({ auth, divisions }) {
                                         setEditingDivision(null);
                                         setIsModalOpen(true);
                                     }}
+                                    style={{
+                                        borderRadius: "15px",
+                                    }}
                                 >
                                     Add New Division
                                 </Button>
@@ -102,6 +105,10 @@ export default function Index({ auth, divisions }) {
                                                         onClick={() =>
                                                             handleEdit(division)
                                                         }
+                                                        style={{
+                                                            borderRadius:
+                                                                "15px",
+                                                        }}
                                                     >
                                                         Edit
                                                     </Button>
@@ -113,6 +120,10 @@ export default function Index({ auth, divisions }) {
                                                                 division.id
                                                             )
                                                         }
+                                                        style={{
+                                                            borderRadius:
+                                                                "15px",
+                                                        }}
                                                     >
                                                         Delete
                                                     </Button>

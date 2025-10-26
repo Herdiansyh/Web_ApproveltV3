@@ -27,9 +27,18 @@ class InitialDataSeeder extends Seeder
         // Create manager account
         User::create([
             'name' => 'Admin',
-            'email' => 'admin@admin.com',
-            'password' => Hash::make('12345678'),
+            'email' => 'direktur@direktur.com',
+            'password' => Hash::make('123123123'),
             'role' => 'manager',
+            'division_id' => Division::where('name', 'General')->first()->id,
+            'email_verified_at' => now(),
+        ]);
+        // Create admin account
+        User::create([
+            'name' => 'Admin',
+            'email' => 'admin@admin.com',
+            'password' => Hash::make('123123123'),
+            'role' => 'admin',
             'division_id' => Division::where('name', 'General')->first()->id,
             'email_verified_at' => now(),
         ]);
@@ -57,7 +66,7 @@ class InitialDataSeeder extends Seeder
             User::create([
                 'name' => $employee['name'],
                 'email' => $employee['email'],
-                'password' => Hash::make('password123'),
+                'password' => Hash::make('123123123'),
                 'role' => 'employee',
                 'division_id' => Division::where('name', $employee['division'])->first()->id,
                 'email_verified_at' => now(),

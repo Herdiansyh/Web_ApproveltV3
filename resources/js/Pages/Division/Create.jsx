@@ -110,10 +110,19 @@ export default function Create({ isOpen, onClose, division }) {
                             type="button"
                             variant="outline"
                             onClick={onClose}
+                            style={{
+                                borderRadius: "15px",
+                            }}
                         >
                             Cancel
                         </Button>
-                        <Button type="submit" disabled={processing}>
+                        <Button
+                            type="submit"
+                            disabled={processing}
+                            style={{
+                                borderRadius: "15px",
+                            }}
+                        >
                             {division ? "Update" : "Create"}
                         </Button>
                     </DialogFooter>

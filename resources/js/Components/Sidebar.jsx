@@ -1,169 +1,166 @@
 import React, { useEffect, useState } from "react";
-import { Button } from "./ui/button";
+import { usePage, Link, router } from "@inertiajs/react";
 import {
-    CheckCircle2,
     FileText,
-    FileType,
     ListCheck,
+    User2,
+    UserCircle2,
+    CheckCircle2,
     LogOut,
     Menu,
-    User,
-    User2,
-    User2Icon,
-    UserCircle2,
 } from "lucide-react";
-import { Link, router, usePage } from "@inertiajs/react";
-import Modal from "./Modal";
-import NavLink from "./NavLink";
-import Dropdown from "./Dropdown";
+
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogFooter,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import {
+    Tooltip,
+    TooltipTrigger,
+    TooltipContent,
+    TooltipProvider,
+} from "@/components/ui/tooltip";
+import { Separator } from "@/components/ui/separator";
+import { cn } from "@/lib/utils";
 
 export default function Sidebar() {
     const [open, setOpen] = useState(true);
-    const [showingLogoutModal, setShowingLogoutModal] = useState(false);
+    const [logoutDialog, setLogoutDialog] = useState(false);
+    const user = usePage().props.auth.user;
+
+    useEffect(() => {
+        const handleResize = () => setOpen(window.innerWidth >= 768);
+        handleResize();
+        window.addEventListener("resize", handleResize);
+        return () => window.removeEventListener("resize", handleResize);
+    }, []);
 
     const confirmLogout = () => {
         router.post(route("logout"));
     };
-    const user = usePage().props.auth.user;
-    // Mengecek ukuran layar saat pertama kali render
-    useEffect(() => {
-        const handleResize = () => {
-            if (window.innerWidth < 768) {
-                setOpen(false);
-            } else {
-                setOpen(true);
-            }
-        };
 
-        // Jalankan saat mount
-        handleResize();
+    const navItems = [
+        {
+            label: "Dashboard",
+            href: route("dashboard"),
+            active: route().current("dashboard"),
+            icon: <FileText className="h-5 w-5" />,
+        },
+        // 🔹 Lihat List Persetujuan (khusus divisi yang menerima pengajuan)
+        {
+            label: "Lihat List Persetujuan",
+            href: route("submissions.forDivision"),
+            active: route().current("submissions.forDivision"),
+            icon: <ListCheck className="h-5 w-5" />,
+        },
 
-        // Tambahkan listener untuk resize
-        window.addEventListener("resize", handleResize);
-
-        // Cleanup listener saat unmount
-        return () => window.removeEventListener("resize", handleResize);
-    }, []);
+        // 🔹 Lihat Pengajuan (untuk melihat pengajuan yang dibuat user)
+        {
+            label: "Lihat Pengajuan",
+            href: route("submissions.index"),
+            active: route().current("submissions.index"),
+            icon: <CheckCircle2 className="h-5 w-5" />,
+        },
+        ...(user.role === "admin"
+            ? [
+                  {
+                      label: "Division Management",
+                      href: route("divisions.index"),
+                      active: route().current("divisions.index"),
+                      icon: <UserCircle2 className="h-5 w-5" />,
+                  },
+                  {
+                      label: "User Management",
+                      href: route("users.index"),
+                      active: route().current("users.*"),
+                      icon: <User2 className="h-5 w-5" />,
+                  },
+              ]
+            : []),
+    ];
 
     return (
-        <>
-            {" "}
-            {/* Sidebar */}
-            <div
-                className={`bg-white shadow-md  transition-all   duration-300  ${
-                    open ? "w-64 min-w-64 " : "w-20 flex flex-col items-center"
-                } p-4`}
+        <TooltipProvider delayDuration={0}>
+            <aside
+                className={cn(
+                    "flex flex-col transition-all duration-300 border-r bg-sidebar text-sidebar-foreground",
+                    open ? "min-w-64 px-4 py-5" : "w-20 items-center px-2 py-5"
+                )}
             >
-                <div className="flex items-center justify-end">
-                    <button
-                        variant="outline"
+                <div className="flex items-center justify-end mb-6">
+                    <Button
+                        variant="ghost"
                         size="icon"
+                        className="text-muted-foreground hover:text-foreground"
                         onClick={() => setOpen(!open)}
                     >
-                        <Menu className="h-5 w-5 text-gray-500" />
-                    </button>
+                        <Menu className="h-5 w-5" />
+                    </Button>
                 </div>
 
-                <nav className="mt-6 space-y-3 flex flex-col">
-                    <NavLink
-                        href={route("dashboard")}
-                        active={route().current("dashboard")}
-                        className="flex ml-1 items-center gap-3 p-2 text-gray-700 hover:bg-gray-100 rounded-md"
-                    >
-                        <FileText className="w-5 h-5" />
-                        {open && <span>Dashboard</span>}
-                    </NavLink>
-                    <NavLink
-                        href={route("submissions.forDivision")}
-                        active={route().current("submissions.forDivision")}
-                        className="flex ml-1 items-center gap-3 p-2 text-gray-700 hover:bg-gray-100 rounded-md"
-                    >
-                        <ListCheck className="w-5 h-5" />
-                        {open && <span>lihat list pengajuan</span>}
-                    </NavLink>{" "}
-                    {user.role === "admin" && (
-                        <NavLink
-                            href={route("divisions.index")}
-                            active={route().current("divisions.index")}
-                            className="flex ml-1 items-center gap-3 p-2 text-gray-700 hover:bg-gray-100 rounded-md"
-                        >
-                            <UserCircle2 className="w-5 h-5" />
-                            {open && <span>Division Management</span>}
-                        </NavLink>
-                    )}
-                    {(user.role === "employee" || user.role === "manager") && (
-                        <NavLink
-                            href={route("submissions.index")}
-                            active={route().current("submissions.index")}
-                            className="flex ml-1 items-center gap-3 p-2 text-gray-700 hover:bg-gray-100 rounded-md"
-                        >
-                            <CheckCircle2 className="w-5 h-5" />
-                            {open && (
-                                <>
-                                    {user.role === "employee" && (
-                                        <span>Pengajuan</span>
+                <nav className="flex flex-col gap-3">
+                    {navItems.map((item) => (
+                        <Tooltip key={item.label}>
+                            <TooltipTrigger asChild>
+                                <Link
+                                    href={item.href}
+                                    className={cn(
+                                        "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-all",
+                                        item.active
+                                            ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-sm"
+                                            : "text-muted-foreground hover:bg-sidebar-accent/50 hover:text-foreground"
                                     )}
-                                    {user.role === "manager" && (
-                                        <span>Lihat list Pengajuan</span>
-                                    )}
-                                </>
+                                >
+                                    {item.icon}
+                                    {open && <span>{item.label}</span>}
+                                </Link>
+                            </TooltipTrigger>
+                            {!open && (
+                                <TooltipContent side="right">
+                                    {item.label}
+                                </TooltipContent>
                             )}
-                        </NavLink>
-                    )}{" "}
-                    {/* <Link
-                        href={route("submissions.forDivision")}
-                        className="flex ml-1 items-center gap-3 p-2 text-gray-700 hover:bg-gray-100 rounded-md"
+                        </Tooltip>
+                    ))}
+
+                    <Separator className="my-3 bg-sidebar-border" />
+
+                    <Button
+                        variant="ghost"
+                        className="justify-start gap-3 text-muted-foreground hover:bg-destructive hover:text-destructive-foreground transition-all"
+                        onClick={() => setLogoutDialog(true)}
                     >
-                        {open && <span>lihat list pengajuan</span>}
-                    </Link> */}
-                    {user.role === "admin" && (
-                        <NavLink
-                            href={route("users.index")}
-                            active={route().current("users.*")}
-                            className="flex ml-1 items-center gap-3 p-2 text-gray-700 hover:bg-gray-100 rounded-md"
-                        >
-                            <User2 className="w-5 h-5" />
-                            {open && <span>User Management</span>}
-                        </NavLink>
-                    )}
-                    <button
-                        onClick={() => setShowingLogoutModal(true)}
-                        className="flex w-full items-center gap-3 p-2 text-gray-700 hover:bg-gray-100 rounded-md"
-                    >
-                        <LogOut className="w-5 h-5" />
+                        <LogOut className="h-5 w-5" />
                         {open && <span>Logout</span>}
-                    </button>
+                    </Button>
                 </nav>
-            </div>
-            <Modal
-                show={showingLogoutModal}
-                onClose={() => setShowingLogoutModal(false)}
-            >
-                <div className="p-6 ">
-                    <h2 className="text-lg font-semibold text-gray-900">
-                        Konfirmasi Logout
-                    </h2>
-                    <p className="mt-2 text-sm text-gray-600">
+            </aside>
+
+            <Dialog open={logoutDialog} onOpenChange={setLogoutDialog}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Konfirmasi Logout</DialogTitle>
+                    </DialogHeader>
+                    <p className="text-sm text-muted-foreground">
                         Apakah Anda yakin ingin keluar dari aplikasi?
                     </p>
-                    <div className="mt-6 flex justify-end gap-4">
-                        <button
-                            type="button"
-                            className="px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-md"
-                            onClick={() => setShowingLogoutModal(false)}
+                    <DialogFooter className="mt-4">
+                        <Button
+                            variant="outline"
+                            onClick={() => setLogoutDialog(false)}
                         >
                             Batal
-                        </button>
-                        <button
-                            type="button"
-                            className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-md"
-                            onClick={confirmLogout}
-                        >
+                        </Button>
+                        <Button variant="destructive" onClick={confirmLogout}>
                             Ya, Logout
-                        </button>
-                    </div>
-                </div>
-            </Modal>
-        </>
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+        </TooltipProvider>
     );
 }

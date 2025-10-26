@@ -1,35 +1,59 @@
-import ApplicationLogo from "@/Components/ApplicationLogo";
 import Dropdown from "@/Components/Dropdown";
-import NavLink from "@/Components/NavLink";
-import ResponsiveNavLink from "@/Components/ResponsiveNavLink";
-import { Link, usePage } from "@inertiajs/react";
-import { useState } from "react";
+import { usePage } from "@inertiajs/react";
+import { useState, useEffect } from "react";
 
 export default function AuthenticatedLayout({ header, children }) {
     const user = usePage().props.auth.user;
+    const [darkMode, setDarkMode] = useState(
+        localStorage.getItem("theme") === "dark"
+    );
 
-    const [showingNavigationDropdown, setShowingNavigationDropdown] =
-        useState(false);
+    useEffect(() => {
+        if (darkMode) {
+            document.documentElement.classList.add("dark");
+            localStorage.setItem("theme", "dark");
+        } else {
+            document.documentElement.classList.remove("dark");
+            localStorage.setItem("theme", "light");
+        }
+    }, [darkMode]);
+
+    const toggleDarkMode = () => {
+        setDarkMode(!darkMode);
+    };
 
     return (
-        <div className="min-h-screen bg-gray-100">
+        <div className="min-h-screen bg-background text-foreground">
             {header && (
-                <header className="bg-white shadow">
-                    <div className=" mx-auto py-6 flex justify-between px-4 sm:px-6 lg:px-8">
-                        <h2 className="text-xl font-semibold leading-tight text-gray-800">
+                <header className="bg-card text-card-foreground shadow">
+                    <div className="mx-auto py-6 flex justify-between px-4 sm:px-6 lg:px-8">
+                        <h2 className="text-xl font-semibold leading-tight">
                             E-Approval
-                        </h2>{" "}
-                        <div className=" flex items-center">
+                        </h2>
+                        <div className="flex items-center space-x-4">
+                            {/* Toggle Dark/Light */}
+                            <button
+                                onClick={toggleDarkMode}
+                                className={`w-12 h-5 flex items-center rounded-full p-1 duration-300 ease-in-out border border-border ${
+                                    darkMode
+                                        ? "bg-gray-700 justify-end"
+                                        : "bg-yellow-50 justify-start"
+                                }`}
+                            >
+                                <span className="w-4 h-4 rounded-full bg-white flex items-center justify-center text-xs">
+                                    {darkMode ? "🌙" : "🌞"}
+                                </span>
+                            </button>
+
                             <div className="relative">
                                 <Dropdown>
                                     <Dropdown.Trigger>
                                         <span className="inline-flex rounded-md">
                                             <button
                                                 type="button"
-                                                className="inline-flex items-center rounded-md border border-transparent bg-white px-3 py-2 text-sm font-medium leading-4 text-gray-500 transition duration-150 ease-in-out hover:text-gray-700 focus:outline-none"
+                                                className="inline-flex items-center rounded-md border border-transparent bg-card px-3 py-2 text-sm font-medium leading-4 text-foreground hover:text-primary transition"
                                             >
                                                 {user.name}
-
                                                 <svg
                                                     className="-me-0.5 ms-2 h-4 w-4"
                                                     xmlns="http://www.w3.org/2000/svg"
