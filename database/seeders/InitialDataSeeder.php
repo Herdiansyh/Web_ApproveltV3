@@ -26,7 +26,7 @@ class InitialDataSeeder extends Seeder
 
         // Create manager account
         User::create([
-            'name' => 'Admin',
+            'name' => 'Direktur',
             'email' => 'direktur@direktur.com',
             'password' => Hash::make('123123123'),
             'role' => 'manager',

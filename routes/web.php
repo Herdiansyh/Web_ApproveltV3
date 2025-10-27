@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\DivisionController;
+use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SubmissionController;
 use App\Http\Controllers\UserController;
@@ -17,6 +18,7 @@ Route::get('/', function () {
         'phpVersion' => PHP_VERSION,
     ]);
 });
+Route::resource('documents', DocumentController::class);
 
 // User Management Routes (Manager only)
 Route::middleware(['auth', 'role:admin'])->group(function () {

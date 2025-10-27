@@ -9,8 +9,9 @@ import { Textarea } from "@/Components/ui/textarea";
 import Sidebar from "@/Components/Sidebar";
 import Swal from "sweetalert2";
 
-export default function Create({ auth, userDivision }) {
+export default function Create({ auth, userDivision, documents }) {
     const { data, setData, post, processing, errors, reset } = useForm({
+        document_id: "",
         title: "",
         description: "",
         file: null,
@@ -20,7 +21,6 @@ export default function Create({ auth, userDivision }) {
         const file = e.target.files[0];
         if (!file) return;
 
-        // Validasi ukuran file maksimal 10MB
         if (file.size > 10 * 1024 * 1024) {
             Swal.fire({
                 icon: "warning",
@@ -35,6 +35,14 @@ export default function Create({ auth, userDivision }) {
 
     const submit = (e) => {
         e.preventDefault();
+
+        if (!data.document_id) {
+            Swal.fire({
+                icon: "warning",
+                title: "Pilih jenis dokumen terlebih dahulu",
+            });
+            return;
+        }
 
         if (!data.file) {
             Swal.fire({
@@ -54,7 +62,7 @@ export default function Create({ auth, userDivision }) {
         }).then((result) => {
             if (result.isConfirmed) {
                 post(route("submissions.store"), {
-                    forceFormData: true, // Penting agar file dikirim sebagai FormData
+                    forceFormData: true,
                     onSuccess: () => {
                         reset();
                         Swal.fire({
@@ -66,11 +74,12 @@ export default function Create({ auth, userDivision }) {
                         });
                     },
                     onError: (err) => {
-                        console.error("Error saat submit:", err); // <-- ini untuk debug
                         Swal.fire({
                             icon: "error",
                             title: "Gagal",
-                            text: "Terjadi kesalahan saat mengirim pengajuan. Cek console untuk detail.",
+                            text: err?.workflow
+                                ? err.workflow
+                                : "Terjadi kesalahan saat mengirim pengajuan.",
                         });
                     },
                 });
@@ -98,7 +107,46 @@ export default function Create({ auth, userDivision }) {
                                 encType="multipart/form-data"
                             >
                                 <div className="space-y-6">
-                                    {/* Judul */}
+                                    {/* Pilih Jenis Dokumen */}
+                                    <div>
+                                        <Label>Jenis Dokumen</Label>
+                                        <select
+                                            value={data.document_id}
+                                            onChange={(e) =>
+                                                setData(
+                                                    "document_id",
+                                                    e.target.value
+                                                )
+                                            }
+                                            className="border-gray-300 rounded-md w-full p-2 mt-1"
+                                            required
+                                        >
+                                            <option value="">
+                                                -- Pilih Jenis Dokumen --
+                                            </option>
+                                            {documents?.length > 0 ? (
+                                                documents.map((doc) => (
+                                                    <option
+                                                        key={doc.id}
+                                                        value={doc.id}
+                                                    >
+                                                        {doc.name}
+                                                    </option>
+                                                ))
+                                            ) : (
+                                                <option value="" disabled>
+                                                    Tidak ada dokumen tersedia
+                                                </option>
+                                            )}
+                                        </select>
+                                        {errors.document_id && (
+                                            <p className="text-red-600 text-sm mt-1">
+                                                {errors.document_id}
+                                            </p>
+                                        )}
+                                    </div>
+
+                                    {/* Judul Pengajuan */}
                                     <div>
                                         <Label>Judul Pengajuan</Label>
                                         <Input

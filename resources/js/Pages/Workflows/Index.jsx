@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { Head, router } from "@inertiajs/react";
 import { Card } from "@/Components/ui/card";
@@ -24,23 +24,28 @@ import {
 import Sidebar from "@/Components/Sidebar";
 import Swal from "sweetalert2";
 
-export default function Index({ auth, workflows, divisions }) {
+export default function Index({ auth, workflows, divisions, documents }) {
     const [showModal, setShowModal] = useState(false);
     const [editingWorkflow, setEditingWorkflow] = useState(null);
 
-    // Pastikan workflows selalu array
     const workflowsList = workflows || [];
 
     const { data, setData, post, put, processing, errors, reset } = useForm({
         name: "",
         description: "",
-        steps: [{ division_id: "" }], // default minimal 1 step
+        document_id: documents[0]?.id || "", // default ke document pertama
+        steps: [{ division_id: "" }],
     });
 
     const openCreateModal = () => {
         setEditingWorkflow(null);
         reset();
-        setData("steps", [{ division_id: "" }]);
+        setData({
+            name: "",
+            description: "",
+            document_id: documents[0]?.id || "",
+            steps: [{ division_id: "" }],
+        });
         setShowModal(true);
     };
 
@@ -49,6 +54,7 @@ export default function Index({ auth, workflows, divisions }) {
         setData({
             name: workflow.name,
             description: workflow.description || "",
+            document_id: workflow.document_id || documents[0]?.id || "",
             steps: workflow.steps?.map((s) => ({
                 id: s.id,
                 division_id: s.division?.id || "",
@@ -59,8 +65,13 @@ export default function Index({ auth, workflows, divisions }) {
 
     const handleSubmit = (e) => {
         e.preventDefault();
+
+        if (!data.document_id) return; // pastikan document dipilih
+
         if (editingWorkflow) {
+            // update workflow
             put(route("workflows.update", editingWorkflow.id), {
+                ...data, // kirim langsung data tanpa membungkus lagi
                 onSuccess: () => {
                     setShowModal(false);
                     setEditingWorkflow(null);
@@ -74,7 +85,10 @@ export default function Index({ auth, workflows, divisions }) {
                 },
             });
         } else {
+            // create workflow baru
+            // Untuk create
             post(route("workflows.store"), {
+                ...data, // pakai spread operator, bukan { data }
                 onSuccess: () => {
                     setShowModal(false);
                     reset();
@@ -86,29 +100,23 @@ export default function Index({ auth, workflows, divisions }) {
                     });
                 },
             });
-        }
-    };
 
-    const handleDelete = (workflowId) => {
-        Swal.fire({
-            title: "Are you sure?",
-            text: "You won't be able to revert this!",
-            icon: "warning",
-            showCancelButton: true,
-            confirmButtonText: "Yes, delete it!",
-        }).then((result) => {
-            if (result.isConfirmed) {
-                router.delete(route("workflows.destroy", workflowId), {
-                    onSuccess: () => {
-                        Swal.fire(
-                            "Deleted!",
-                            "Workflow has been deleted.",
-                            "success"
-                        );
-                    },
-                });
-            }
-        });
+            // Untuk update
+            put(route("workflows.update", editingWorkflow.id), {
+                ...data, // pakai spread operator juga
+                onSuccess: () => {
+                    setShowModal(false);
+                    setEditingWorkflow(null);
+                    reset();
+                    Swal.fire({
+                        icon: "success",
+                        title: "Workflow updated",
+                        timer: 2000,
+                        showConfirmButton: false,
+                    });
+                },
+            });
+        }
     };
 
     const addStep = () =>
@@ -116,6 +124,30 @@ export default function Index({ auth, workflows, divisions }) {
     const removeStep = (index) => {
         const newSteps = data.steps.filter((_, i) => i !== index);
         setData("steps", newSteps);
+    };
+    const handleDelete = (id) => {
+        Swal.fire({
+            title: "Are you sure?",
+            text: "This action cannot be undone.",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#d33",
+            cancelButtonColor: "#3085d6",
+            confirmButtonText: "Yes, delete it!",
+        }).then((result) => {
+            if (result.isConfirmed) {
+                router.delete(route("workflows.destroy", id), {
+                    onSuccess: () => {
+                        Swal.fire({
+                            icon: "success",
+                            title: "Workflow deleted",
+                            timer: 2000,
+                            showConfirmButton: false,
+                        });
+                    },
+                });
+            }
+        });
     };
 
     return (
@@ -149,6 +181,7 @@ export default function Index({ auth, workflows, divisions }) {
                                 <TableHeader>
                                     <TableRow>
                                         <TableHead>Name</TableHead>
+                                        <TableHead>Document</TableHead>
                                         <TableHead>Description</TableHead>
                                         <TableHead>Steps</TableHead>
                                         <TableHead>Actions</TableHead>
@@ -158,6 +191,9 @@ export default function Index({ auth, workflows, divisions }) {
                                     {workflowsList.map((wf) => (
                                         <TableRow key={wf.id}>
                                             <TableCell>{wf.name}</TableCell>
+                                            <TableCell>
+                                                {wf.document?.name || "-"}
+                                            </TableCell>
                                             <TableCell>
                                                 {wf.description || "-"}
                                             </TableCell>
@@ -207,7 +243,7 @@ export default function Index({ auth, workflows, divisions }) {
                 </div>
             </div>
 
-            {/* Create/Edit Modal */}
+            {/* Modal */}
             {showModal && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
                     <Card className="w-full max-w-lg p-6">
@@ -216,7 +252,6 @@ export default function Index({ auth, workflows, divisions }) {
                                 ? "Edit Workflow"
                                 : "Create New Workflow"}
                         </h3>
-
                         <form onSubmit={handleSubmit}>
                             <div className="space-y-4">
                                 <div>
@@ -232,6 +267,42 @@ export default function Index({ auth, workflows, divisions }) {
                                     {errors.name && (
                                         <p className="text-sm text-red-600 mt-1">
                                             {errors.name}
+                                        </p>
+                                    )}
+                                </div>
+
+                                <div>
+                                    <Label htmlFor="document_id">
+                                        Document
+                                    </Label>
+                                    <Select
+                                        value={
+                                            data.document_id?.toString() || ""
+                                        }
+                                        onValueChange={(value) =>
+                                            setData(
+                                                "document_id",
+                                                parseInt(value)
+                                            )
+                                        }
+                                    >
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Select document" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {documents?.map((doc) => (
+                                                <SelectItem
+                                                    key={doc.id}
+                                                    value={doc.id.toString()}
+                                                >
+                                                    {doc.name}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                    {errors.document_id && (
+                                        <p className="text-sm text-red-600 mt-1">
+                                            {errors.document_id}
                                         </p>
                                     )}
                                 </div>
@@ -277,7 +348,7 @@ export default function Index({ auth, workflows, divisions }) {
                                                     newSteps[
                                                         index
                                                     ].division_id =
-                                                        parseInt(value); // kembalikan ke number
+                                                        parseInt(value);
                                                     setData("steps", newSteps);
                                                 }}
                                             >
@@ -333,7 +404,7 @@ export default function Index({ auth, workflows, divisions }) {
                                 </Button>
                                 <Button
                                     type="submit"
-                                    disabled={processing}
+                                    disabled={processing || !data.document_id}
                                     style={{ borderRadius: "15px" }}
                                 >
                                     {editingWorkflow ? "Update" : "Create"}

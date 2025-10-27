@@ -10,6 +10,7 @@ import {
     Menu,
     ListChecks,
     Workflow,
+    DockIcon,
 } from "lucide-react";
 
 import {
@@ -46,27 +47,31 @@ export default function Sidebar() {
     };
 
     const navItems = [
-        {
-            label: "Dashboard",
-            href: route("dashboard"),
-            active: route().current("dashboard"),
-            icon: <FileText className="h-5 w-5" />,
-        },
-        // 🔹 Lihat List Persetujuan (khusus divisi yang menerima pengajuan)
-        {
-            label: "Lihat List Persetujuan",
-            href: route("submissions.forDivision"),
-            active: route().current("submissions.forDivision"),
-            icon: <ListCheck className="h-5 w-5" />,
-        },
+        ...(user.role === "employee" || user.role === "manager"
+            ? [
+                  {
+                      label: "Dashboard",
+                      href: route("dashboard"),
+                      active: route().current("dashboard"),
+                      icon: <FileText className="h-5 w-5" />,
+                  },
+                  // 🔹 Lihat List Persetujuan (khusus divisi yang menerima pengajuan)
+                  {
+                      label: "Lihat List Persetujuan",
+                      href: route("submissions.forDivision"),
+                      active: route().current("submissions.forDivision"),
+                      icon: <ListCheck className="h-5 w-5" />,
+                  },
 
-        // 🔹 Lihat Pengajuan (untuk melihat pengajuan yang dibuat user)
-        {
-            label: "Lihat Pengajuan",
-            href: route("submissions.index"),
-            active: route().current("submissions.index"),
-            icon: <CheckCircle2 className="h-5 w-5" />,
-        },
+                  // 🔹 Lihat Pengajuan (untuk melihat pengajuan yang dibuat user)
+                  {
+                      label: "Lihat Pengajuan",
+                      href: route("submissions.index"),
+                      active: route().current("submissions.index"),
+                      icon: <CheckCircle2 className="h-5 w-5" />,
+                  },
+              ]
+            : []),
         ...(user.role === "admin"
             ? [
                   {
@@ -86,6 +91,12 @@ export default function Sidebar() {
                       href: route("workflows.index"),
                       active: route().current("workflows.*"),
                       icon: <Workflow className="h-5 w-5" />,
+                  }, // 🔹 Document Management (baru ditambahkan)
+                  {
+                      label: "Document Management",
+                      href: route("documents.index"),
+                      active: route().current("documents.*"),
+                      icon: <DockIcon className="h-5 w-5" />,
                   },
               ]
             : []),

@@ -6,57 +6,58 @@ use App\Models\Division;
 use App\Models\Submission;
 use App\Models\SubmissionWorkflowStep;
 use App\Models\Workflow;
+use App\Models\Document;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
-use App\Notifications\SubmissionStatusUpdated;
 
 class SubmissionController extends Controller
 {
     use AuthorizesRequests;
 
     /** ------------------------
-     *  PENGAJUAN DOKUMEN (DIBUAT OLEH DIVISI INI)
+     *  LIST PENGAJUAN OLEH USER
      *  ------------------------ */
-  public function index()
-{
-    $user = Auth::user();
+    public function index()
+    {
+        $user = Auth::user();
 
-    $submissions = Submission::with(['workflow.steps.division', 'workflowSteps.division'])
-        ->where('user_id', $user->id) // ubah dari division_id menjadi user_id
-        ->latest()
-        ->paginate(10);
+        $submissions = Submission::with(['workflow.document', 'workflow.steps.division', 'workflowSteps.division'])
+            ->where('user_id', $user->id)
+            ->latest()
+            ->paginate(10);
 
-    return Inertia::render('Submissions/Index', [
-        'submissions' => $submissions,
-        'userDivision' => $user->division,
-    ]);
-}
-
+        return Inertia::render('Submissions/Index', [
+            'submissions' => $submissions,
+            'userDivision' => $user->division,
+        ]);
+    }
 
     /** ------------------------
-     *  LIST PERSUTUJUAN (DOKUMEN MASUK UNTUK DIVISI INI)
+     *  LIST PENGAJUAN UNTUK DIVISI INI
      *  ------------------------ */
-    public function forDivision()
+    public function forDivision(Request $request)
     {
         $user = Auth::user();
         $divisionId = $user->division_id;
+        $statusFilter = $request->get('status', 'all');
 
-        // Ambil semua submission yang sedang berada di step di mana divisi ini sebagai penilai
-        $submissions = Submission::with(['user.division', 'workflow.steps.division'])
+        $submissions = Submission::with(['user.division', 'workflow.document', 'workflow.steps.division', 'workflowSteps'])
             ->whereHas('workflowSteps', function ($query) use ($divisionId) {
-                $query->whereColumn('submission_workflow_steps.step_order', 'submissions.current_step')
-                      ->where('submission_workflow_steps.division_id', $divisionId);
+                $query->where('division_id', $divisionId);
             })
-            ->where('status', 'pending')
+            ->when($statusFilter === 'pending', function ($query) {
+                $query->where('status', 'pending');
+            })
             ->latest()
             ->paginate(10);
 
         return Inertia::render('Submissions/ForDivision', [
             'submissions' => $submissions,
             'userDivision' => $user->division,
+            'statusFilter' => $statusFilter,
         ]);
     }
 
@@ -68,8 +69,14 @@ class SubmissionController extends Controller
         $user = Auth::user();
         $division = $user->division;
 
+        // Ambil semua dokumen yang memiliki workflow aktif
+        $documents = Document::whereHas('workflows', function ($q) {
+            $q->where('is_active', true);
+        })->get();
+
         return Inertia::render('Submissions/Create', [
             'userDivision' => $division,
+            'documents' => $documents,
         ]);
     }
 
@@ -77,91 +84,93 @@ class SubmissionController extends Controller
      *  SIMPAN PENGAJUAN BARU
      *  ------------------------ */
     public function store(Request $request)
-{
-    $validated = $request->validate([
-        'title' => 'required|string|max:255',
-        'description' => 'nullable|string',
-        'file' => 'required|file|max:10240', // 10MB
-    ]);
-
-    $user = Auth::user();
-    $userDivisionId = $user->division_id;
-
-    // Cari workflow aktif untuk divisi ini
-    $workflow = Workflow::where('division_from_id', $userDivisionId)
-        ->where('is_active', true)
-        ->with('steps')
-        ->first();
-
-    if (!$workflow) {
-        return back()->withErrors([
-            'workflow' => 'Belum ada workflow yang dibuat untuk divisi Anda.',
+    {
+        $validated = $request->validate([
+            'document_id' => 'required|exists:documents,id',
+            'title' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'file' => 'required|file|max:10240',
         ]);
-    }
 
-    $steps = $workflow->steps->sortBy('step_order')->values();
+        $user = Auth::user();
 
-    // Upload file
-    $filePath = $request->file('file')->store('submissions', 'private');
+        // Cari workflow berdasarkan dokumen yang dipilih
+        $workflow = Workflow::where('document_id', $validated['document_id'])
+            ->where('is_active', true)
+            ->with('steps')
+            ->first();
 
-    // Tentukan langkah berikutnya
-    $nextStepOrder = $steps->count() > 1 ? 2 : 1;
+        if (!$workflow) {
+            return back()->withErrors([
+                'workflow' => 'Belum ada workflow yang diatur untuk jenis dokumen ini.',
+            ]);
+        }
 
-    // Buat pengajuan
-    $submission = Submission::create([
-        'user_id' => $user->id,
-        'division_id' => $userDivisionId,
-        'workflow_id' => $workflow->id,
-        'title' => $validated['title'],
-        'description' => $validated['description'] ?? null,
-        'file_path' => $filePath,
-        'status' => 'pending',
-        'current_step' => $nextStepOrder,
-    ]);
+        $steps = $workflow->steps->sortBy('step_order')->values();
 
-    // Simpan semua step workflow
-    foreach ($steps as $step) {
-        SubmissionWorkflowStep::create([
-            'submission_id' => $submission->id,
-            'division_id' => $step->division_id,
-            'step_order' => $step->step_order,
-            'status' => $step->step_order === 1 ? 'approved' : 'pending',
+        // Upload file
+        $filePath = $request->file('file')->store('submissions', 'private');
+
+        // Buat submission baru
+        $submission = Submission::create([
+            'user_id' => $user->id,
+            'division_id' => $user->division_id,
+            'workflow_id' => $workflow->id,
+            'title' => $validated['title'],
+            'description' => $validated['description'] ?? null,
+            'file_path' => $filePath,
+            'status' => 'pending',
+            'current_step' => 1,
         ]);
+
+        // Buat step workflow-nya
+        foreach ($steps as $step) {
+            SubmissionWorkflowStep::create([
+                'submission_id' => $submission->id,
+                'division_id' => $step->division_id,
+                'step_order' => $step->step_order,
+                'status' => $step->step_order === 1 ? 'approved' : 'pending',
+            ]);
+        }
+
+        return redirect()->route('submissions.index')->with('success', 'Pengajuan berhasil dibuat.');
     }
-
-    return redirect()->route('submissions.index')->with('success', 'Pengajuan berhasil dibuat.');
-}
-
 
     /** ------------------------
      *  DETAIL PENGAJUAN
      *  ------------------------ */
-    public function show(Submission $submission)
-    {
-        $this->authorize('view', $submission);
+  public function show(Submission $submission)
+{
+    $this->authorize('view', $submission);
 
-        $submission->load(['user.division']);
-        $steps = $submission->workflowSteps()->with('division')->orderBy('step_order')->get();
-        $currentStep = $steps->firstWhere('step_order', $submission->current_step);
+    // Load relasi user, division, workflow dan semua langkah dengan division
+    $submission->load(['user.division', 'workflow.document', 'workflowSteps.division']);
 
-        $user = Auth::user();
-        $canApprove = $currentStep &&
-            $currentStep->division_id === $user->division_id &&
-            $submission->status === 'pending';
+    // Ambil semua step
+    $steps = $submission->workflowSteps()->orderBy('step_order')->get();
 
-        return Inertia::render('Submissions/Show', [
-            'submission' => $submission,
-            'workflowSteps' => $steps,
-            'currentStep' => $currentStep,
-            'canApprove' => $canApprove,
-            'fileUrl' => route('submissions.file', $submission->id),
-            'signedFileExists' => $submission->status === 'approved' &&
-                Storage::disk('private')->exists($submission->file_path),
-        ]);
-    }
+    // Step saat ini
+    $currentStep = $steps->firstWhere('step_order', $submission->current_step);
+
+    $user = Auth::user();
+    $canApprove = $currentStep &&
+        $currentStep->division_id === $user->division_id &&
+        $submission->status === 'pending';
+
+    return Inertia::render('Submissions/Show', [
+        'submission' => $submission,
+        'workflowSteps' => $steps,          // Kirim steps ke frontend
+        'currentStep' => $currentStep,      // Kirim step saat ini
+        'canApprove' => $canApprove,
+        'fileUrl' => route('submissions.file', $submission->id),
+        'signedFileExists' => $submission->status === 'approved' &&
+            Storage::disk('private')->exists($submission->file_path),
+    ]);
+}
+
 
     /** ------------------------
-     *  FILE VIEW
+     *  VIEW FILE
      *  ------------------------ */
     public function file(Submission $submission)
     {
@@ -178,68 +187,60 @@ class SubmissionController extends Controller
             'Content-Type' => $type,
             'Content-Disposition' => 'inline; filename="' . basename($submission->file_path) . '"',
         ]);
-    }/** ------------------------
- *  APPROVE PENGAJUAN
- *  ------------------------ */
-public function approve(Request $request, Submission $submission)
-{
-    $this->authorize('view', $submission);
-
-    $user = Auth::user();
-
-    // Ambil current step
-    $currentStep = $submission->workflowSteps()
-        ->where('step_order', $submission->current_step)
-        ->first();
-
-    if (!$currentStep || $currentStep->division_id !== $user->division_id) {
-        abort(403, 'Anda tidak berhak melakukan approve pada dokumen ini.');
     }
 
-    // Tandai step ini sebagai approved
-    $currentStep->status = 'approved';
-    $currentStep->save();
+    /** ------------------------
+     *  APPROVE PENGAJUAN
+     *  ------------------------ */
+    public function approve(Request $request, Submission $submission)
+    {
+        $this->authorize('view', $submission);
+        $user = Auth::user();
 
-    // Cek apakah ini step terakhir
-    $maxStepOrder = $submission->workflowSteps()->max('step_order');
-    if ($submission->current_step >= $maxStepOrder) {
-        $submission->status = 'approved';
-    } else {
-        // Pindahkan ke step berikutnya
-        $submission->current_step += 1;
-    }
-    $submission->save();
+        $currentStep = $submission->workflowSteps()
+            ->where('step_order', $submission->current_step)
+            ->first();
 
-    return redirect()->back()->with('success', 'Dokumen berhasil disetujui.');
-}
+        if (!$currentStep || $currentStep->division_id !== $user->division_id) {
+            abort(403, 'Anda tidak berhak melakukan approve pada dokumen ini.');
+        }
 
-/** ------------------------
- *  REJECT PENGAJUAN
- *  ------------------------ */
-public function reject(Request $request, Submission $submission)
-{
-    $this->authorize('view', $submission);
+        $currentStep->status = 'approved';
+        $currentStep->save();
 
-    $user = Auth::user();
+        $maxStepOrder = $submission->workflowSteps()->max('step_order');
+        if ($submission->current_step >= $maxStepOrder) {
+            $submission->status = 'approved';
+        } else {
+            $submission->current_step += 1;
+        }
+        $submission->save();
 
-    // Ambil current step
-    $currentStep = $submission->workflowSteps()
-        ->where('step_order', $submission->current_step)
-        ->first();
-
-    if (!$currentStep || $currentStep->division_id !== $user->division_id) {
-        abort(403, 'Anda tidak berhak melakukan reject pada dokumen ini.');
+        return redirect()->back()->with('success', 'Dokumen berhasil disetujui.');
     }
 
-    // Tandai step ini sebagai rejected
-    $currentStep->status = 'rejected';
-    $currentStep->save();
+    /** ------------------------
+     *  REJECT PENGAJUAN
+     *  ------------------------ */
+    public function reject(Request $request, Submission $submission)
+    {
+        $this->authorize('view', $submission);
+        $user = Auth::user();
 
-    // Update status submission menjadi rejected
-    $submission->status = 'rejected';
-    $submission->save();
+        $currentStep = $submission->workflowSteps()
+            ->where('step_order', $submission->current_step)
+            ->first();
 
-    return redirect()->back()->with('success', 'Dokumen telah ditolak.');
-}
+        if (!$currentStep || $currentStep->division_id !== $user->division_id) {
+            abort(403, 'Anda tidak berhak melakukan reject pada dokumen ini.');
+        }
 
+        $currentStep->status = 'rejected';
+        $currentStep->save();
+
+        $submission->status = 'rejected';
+        $submission->save();
+
+        return redirect()->back()->with('success', 'Dokumen telah ditolak.');
+    }
 }

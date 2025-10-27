@@ -24,6 +24,10 @@ export default function Index({ auth, submissions }) {
                     <div className="mx-auto sm:px-6 px-8 lg:px-8 overflow-x-auto">
                         <div className="bg-card text-card-foreground overflow-hidden shadow-md sm:rounded-lg">
                             <div className="p-6">
+                                <span className="text-lg font-bold tracking-wider">
+                                    Buat pengajuan baru
+                                </span>
+
                                 {auth.user.role === "employee" && (
                                     <div className="mb-6 flex justify-end">
                                         <Link
@@ -47,7 +51,7 @@ export default function Index({ auth, submissions }) {
                                                     Judul
                                                 </th>
                                                 <th className="px-6 py-3 text-left">
-                                                    Workflow / Divisi Tujuan
+                                                    Jenis Dokumen
                                                 </th>
                                                 {auth.user.role ===
                                                     "manager" && (
@@ -66,6 +70,7 @@ export default function Index({ auth, submissions }) {
                                                 </th>
                                             </tr>
                                         </thead>
+
                                         <tbody className="divide-y divide-border">
                                             {submissions.data.map(
                                                 (submission) => {
@@ -75,6 +80,7 @@ export default function Index({ auth, submissions }) {
                                                                 s.step_order ===
                                                                 submission.current_step
                                                         );
+
                                                     return (
                                                         <tr
                                                             key={submission.id}
@@ -93,16 +99,15 @@ export default function Index({ auth, submissions }) {
                                                                     submission.title
                                                                 }
                                                             </td>
+
                                                             <td className="px-6 py-4">
-                                                                {currentStep
-                                                                    ?.division
+                                                                {submission
+                                                                    .workflow
+                                                                    ?.document
                                                                     ?.name ||
-                                                                    submission
-                                                                        .workflow
-                                                                        ?.division_to
-                                                                        ?.name ||
                                                                     "-"}
                                                             </td>
+
                                                             {auth.user.role ===
                                                                 "manager" && (
                                                                 <td className="px-6 py-4">
@@ -113,6 +118,7 @@ export default function Index({ auth, submissions }) {
                                                                     }
                                                                 </td>
                                                             )}
+
                                                             <td className="px-6 py-4">
                                                                 <span
                                                                     className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
@@ -134,6 +140,7 @@ export default function Index({ auth, submissions }) {
                                                                         : "Ditolak"}
                                                                 </span>
                                                             </td>
+
                                                             <td className="px-6 py-4">
                                                                 {new Date(
                                                                     submission.created_at
@@ -141,6 +148,7 @@ export default function Index({ auth, submissions }) {
                                                                     "id-ID"
                                                                 )}
                                                             </td>
+
                                                             <td className="px-6 py-4 text-center">
                                                                 <div className="flex justify-center space-x-2">
                                                                     <Link
@@ -170,7 +178,7 @@ export default function Index({ auth, submissions }) {
                                 </div>
 
                                 {/* Pagination */}
-                                <div className="mt-6 flex justify-center">
+                                <div className="mt-6 flex justify-start">
                                     {submissions.links?.map((link, index) => (
                                         <Link
                                             key={index}

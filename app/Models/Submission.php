@@ -31,6 +31,10 @@ class Submission extends Model
     protected $casts = [
         'approved_at' => 'datetime',
     ];
+public function document()
+{
+    return $this->belongsTo(Document::class);
+}
 
     public function user(): BelongsTo
     {
@@ -52,6 +56,7 @@ class Submission extends Model
     {
         return $this->hasMany(SubmissionWorkflowStep::class);
     }
+    
 
     // Langkah workflow saat ini untuk approval
     public function currentWorkflowStep()
@@ -59,6 +64,7 @@ class Submission extends Model
         return $this->hasOne(SubmissionWorkflowStep::class)
             ->where('step_order', $this->current_step);
     }
+    
 }
 
 

@@ -28,7 +28,10 @@ export default function ForDivision({ auth, submissions }) {
                     <div className="mx-auto sm:px-6 lg:px-8">
                         <div className="bg-card shadow-sm sm:rounded-lg">
                             <div className="p-6 text-card-foreground">
-                                <Table>
+                                <span className="   text-lg font-bold tracking-wider">
+                                    Lihat list pengajuan
+                                </span>{" "}
+                                <Table className="mt-6">
                                     <TableHeader>
                                         <TableRow>
                                             <TableHead>Judul</TableHead>
@@ -92,7 +95,6 @@ export default function ForDivision({ auth, submissions }) {
                                         ))}
                                     </TableBody>
                                 </Table>
-
                                 {/* Pagination */}
                                 <div className="mt-6 flex flex-wrap items-center">
                                     {submissions.links &&

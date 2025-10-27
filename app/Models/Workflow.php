@@ -9,13 +9,14 @@ class Workflow extends Model
 {
     use HasFactory;
 
-    protected $fillable = [
+  protected $fillable = [
         'name',
         'description',
         'division_from_id',
         'division_to_id',
         'is_active',
         'total_steps',
+        'document_id',
     ];
 
     /**
@@ -26,6 +27,9 @@ class Workflow extends Model
     {
         return $this->hasMany(WorkflowStep::class);
     }
+public function document() {
+    return $this->belongsTo(Document::class);
+}
 
     /**
      * Relasi ke divisi asal
