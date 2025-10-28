@@ -12,6 +12,7 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/Components/ui/dropdown-menu";
+import PrimaryButton from "@/Components/PrimaryButton";
 
 export default function Show({ auth, submission, fileUrl, canApprove }) {
     const [showApproveModal, setShowApproveModal] = useState(false);
@@ -92,7 +93,7 @@ export default function Show({ auth, submission, fileUrl, canApprove }) {
             }
         >
             <Head title="Detail Pengajuan" />
-            <div className="flex min-h-screen bg-gray-100">
+            <div className="flex min-h-screen bg-background">
                 <Sidebar />
                 <div className="py-12 w-full">
                     <div className="max-w-7xl mx-auto sm:px-6 lg:px-8">
@@ -156,7 +157,12 @@ export default function Show({ auth, submission, fileUrl, canApprove }) {
                                     )}
                                 </div>
                                 <div className="flex flex-col gap-2 items-end ">
-                                    <Button asChild variant="secondary">
+                                    <PrimaryButton
+                                        style={{ borderRadius: "15px" }}
+                                        className="bg-primary !text-[0.6rem] text-primary-foreground hover:bg-primary/90"
+                                        asChild
+                                        variant="secondary"
+                                    >
                                         <a
                                             href={fileUrl}
                                             target="_blank"
@@ -166,7 +172,7 @@ export default function Show({ auth, submission, fileUrl, canApprove }) {
                                                 ? "Unduh Dokumen Bertanda Tangan"
                                                 : "Unduh Dokumen"}
                                         </a>
-                                    </Button>
+                                    </PrimaryButton>
                                     {canApprove &&
                                         submission.status === "pending" && (
                                             <DropdownMenu>

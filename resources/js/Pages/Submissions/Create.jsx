@@ -8,6 +8,13 @@ import { Label } from "@/Components/ui/label";
 import { Textarea } from "@/Components/ui/textarea";
 import Sidebar from "@/Components/Sidebar";
 import Swal from "sweetalert2";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/Components/ui/select";
 
 export default function Create({ auth, userDivision, documents }) {
     const { data, setData, post, processing, errors, reset } = useForm({
@@ -97,7 +104,7 @@ export default function Create({ auth, userDivision, documents }) {
             }
         >
             <Head title="Buat Pengajuan" />
-            <div className="flex min-h-screen bg-gray-100">
+            <div className="flex min-h-screen bg-background">
                 <Sidebar />
                 <div className="py-12 w-full">
                     <div className="mx-auto sm:px-6 lg:px-8">
@@ -110,35 +117,46 @@ export default function Create({ auth, userDivision, documents }) {
                                     {/* Pilih Jenis Dokumen */}
                                     <div>
                                         <Label>Jenis Dokumen</Label>
-                                        <select
+
+                                        <Label>Jenis Dokumen</Label>
+                                        <Select
                                             value={data.document_id}
-                                            onChange={(e) =>
-                                                setData(
-                                                    "document_id",
-                                                    e.target.value
-                                                )
+                                            onValueChange={(value) =>
+                                                setData("document_id", value)
                                             }
-                                            className="border-gray-300 rounded-md w-full p-2 mt-1"
-                                            required
                                         >
-                                            <option value="">
-                                                -- Pilih Jenis Dokumen --
-                                            </option>
-                                            {documents?.length > 0 ? (
-                                                documents.map((doc) => (
-                                                    <option
-                                                        key={doc.id}
-                                                        value={doc.id}
+                                            <SelectTrigger className="w-full mt-1">
+                                                <SelectValue placeholder="-- Pilih Jenis Dokumen --" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {documents?.length > 0 ? (
+                                                    documents.map((doc) => (
+                                                        <SelectItem
+                                                            key={doc.id}
+                                                            value={String(
+                                                                doc.id
+                                                            )}
+                                                        >
+                                                            {doc.name}
+                                                        </SelectItem>
+                                                    ))
+                                                ) : (
+                                                    <SelectItem
+                                                        disabled
+                                                        value=""
                                                     >
-                                                        {doc.name}
-                                                    </option>
-                                                ))
-                                            ) : (
-                                                <option value="" disabled>
-                                                    Tidak ada dokumen tersedia
-                                                </option>
-                                            )}
-                                        </select>
+                                                        Tidak ada dokumen
+                                                        tersedia
+                                                    </SelectItem>
+                                                )}
+                                            </SelectContent>
+                                        </Select>
+                                        {errors.document_id && (
+                                            <p className="text-red-600 text-sm mt-1">
+                                                {errors.document_id}
+                                            </p>
+                                        )}
+
                                         {errors.document_id && (
                                             <p className="text-red-600 text-sm mt-1">
                                                 {errors.document_id}
