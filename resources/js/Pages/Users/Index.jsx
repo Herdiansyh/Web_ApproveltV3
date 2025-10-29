@@ -29,13 +29,31 @@ export default function Index({ auth, users, divisions, roles }) {
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [editingUser, setEditingUser] = useState(null);
     const [selectedDivision, setSelectedDivision] = useState(""); // filter divisi
-
+    const [search, setSearch] = useState("");
     const { data, setData, post, put, processing, errors, reset } = useForm({
         name: "",
         email: "",
         password: "",
         role: "",
         division_id: "",
+    });
+    const handleSearch = (e) => {
+        setSearch(e.target.value);
+    };
+
+    const filteredUsers = users.data.filter((user) => {
+        // Jika ada selectedDivision, cocokkan division_id
+        const matchesDivision = selectedDivision
+            ? String(user.division_id) === String(selectedDivision)
+            : true;
+
+        // Jika ada input search, cocokkan nama
+        const matchesSearch = search
+            ? user.name.toLowerCase().includes(search.toLowerCase())
+            : true;
+
+        // Hanya tampilkan user yang cocok keduanya
+        return matchesDivision && matchesSearch;
     });
 
     const handleSubmit = (e) => {
@@ -107,13 +125,6 @@ export default function Index({ auth, users, divisions, roles }) {
         });
     };
 
-    // Filter user berdasarkan division
-    const filteredUsers = selectedDivision
-        ? users.data.filter(
-              (user) => String(user.division_id) === String(selectedDivision)
-          )
-        : users.data;
-
     return (
         <AuthenticatedLayout
             user={auth.user}
@@ -127,13 +138,23 @@ export default function Index({ auth, users, divisions, roles }) {
             <div className="flex min-h-screen bg-background">
                 <Sidebar />
 
-                <div className="py-12 w-full overflow-auto">
-                    <div className="mx-auto p-6 lg:px-8">
+                <div className="py-12 w-full overflow-auto relative">
+                    <div className="mx-auto p-6 lg:px-8 ">
+                        <h1 className="absolute top-5 text-2xl font-bold">
+                            User Managements
+                        </h1>
                         <Card className="p-6">
                             {/* Header dan Filter */}
                             {/* Filter & Add */}
                             <div className="flex flex-col md:flex-row justify-between gap-3 mb-4">
                                 <div className="flex flex-col md:flex-row gap-2 w-full">
+                                    <Input
+                                        className="md:w-1/2"
+                                        placeholder="Search User..."
+                                        style={{ borderRadius: "8px" }}
+                                        value={search}
+                                        onChange={handleSearch}
+                                    />
                                     <Select
                                         value={selectedDivision}
                                         onValueChange={(value) =>

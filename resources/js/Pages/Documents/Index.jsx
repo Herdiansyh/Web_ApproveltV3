@@ -112,7 +112,7 @@ export default function Index({ auth, documents }) {
                                         placeholder="Search documents..."
                                         value={filterText}
                                         onChange={handleFilterChange}
-                                        className="md:w-1/3 border border-gray-300"
+                                        className="md:w-1/4 w-full border border-gray-300"
                                         style={{ borderRadius: "8px" }}
                                     />
 
@@ -121,7 +121,7 @@ export default function Index({ auth, documents }) {
                                         onValueChange={handleSelectChange}
                                     >
                                         <SelectTrigger
-                                            className="md:w-1/5 border border-gray-300"
+                                            className="md:w-1/6 border border-gray-300"
                                             style={{ borderRadius: "8px" }}
                                         >
                                             <SelectValue placeholder="Filter..." />
@@ -163,11 +163,12 @@ export default function Index({ auth, documents }) {
                                     {filterSelect && (
                                         <Badge
                                             variant="secondary"
-                                            className="flex items-center gap-1 px-2 py-1 text-sm"
+                                            className="flex items-center gap-1 px-2 py-1 text-[0.7rem]"
+                                            style={{ borderRadius: "8px" }}
                                         >
                                             {filterSelect}
                                             <X
-                                                size={14}
+                                                size={10}
                                                 className="cursor-pointer hover:text-red-500"
                                                 onClick={clearSelectFilter}
                                             />
