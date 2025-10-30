@@ -21,7 +21,6 @@ import {
     SelectValue,
 } from "@/Components/ui/select";
 import { Badge } from "@/Components/ui/badge";
-import { X } from "lucide-react";
 import Sidebar from "@/Components/Sidebar";
 import Swal from "sweetalert2";
 
@@ -31,19 +30,14 @@ export default function Index({ auth, workflows, divisions, documents }) {
     const [filterText, setFilterText] = useState("");
     const [filterSelect, setFilterSelect] = useState("");
 
-    const { data, setData, post, put, processing, errors, reset } = useForm({
+    const { data, setData, post, put, processing, reset } = useForm({
         name: "",
         description: "",
         document_id: documents[0]?.id || "",
-        steps: [{ division_id: "" }],
+        steps: [{ division_id: "", actions: [] }],
     });
 
-    // === Filter handling ===
-    const handleFilterText = (e) => setFilterText(e.target.value);
-    const handleFilterSelect = (value) => setFilterSelect(value);
-    const clearSelectFilter = () => setFilterSelect("");
-    const clearTextFilter = () => setFilterText("");
-
+    // === FILTER HANDLING ===
     const filteredWorkflows = workflows.filter((wf) => {
         const matchText = wf.name
             .toLowerCase()
@@ -52,7 +46,7 @@ export default function Index({ auth, workflows, divisions, documents }) {
         return matchText && matchSelect;
     });
 
-    // === CRUD functions ===
+    // === CRUD ===
     const openCreateModal = () => {
         setEditingWorkflow(null);
         reset();
@@ -68,7 +62,10 @@ export default function Index({ auth, workflows, divisions, documents }) {
             steps: workflow.steps?.map((s) => ({
                 id: s.id,
                 division_id: s.division?.id || "",
-            })) || [{ division_id: "" }],
+                actions: Array.isArray(s.actions)
+                    ? s.actions
+                    : JSON.parse(s.actions || "[]"),
+            })) || [{ division_id: "", actions: [] }],
         });
         setShowModal(true);
     };
@@ -83,29 +80,48 @@ export default function Index({ auth, workflows, divisions, documents }) {
         }).then((result) => {
             if (result.isConfirmed) {
                 router.delete(route("workflows.destroy", id), {
-                    onSuccess: () => {
-                        Swal.fire(
-                            "Deleted!",
-                            "Workflow has been removed.",
-                            "success"
-                        );
-                    },
+                    onSuccess: () =>
+                        Swal.fire("Deleted!", "Workflow removed.", "success"),
                 });
             }
         });
     };
 
+    // === HANDLE SUBMIT ===
     const handleSubmit = (e) => {
         e.preventDefault();
-        if (!data.document_id) return;
 
+        const stepsWithDynamicActions = data.steps.map((step, i) => {
+            const nextStep = data.steps[i + 1];
+            const finalActions = [];
+
+            // Tambahkan action sesuai pilihan
+            if (step.actions.includes("approve")) finalActions.push("approve");
+            if (step.actions.includes("reject")) finalActions.push("reject");
+
+            // Jika ada request dan ada step berikutnya, ubah jadi “request to [divisi berikutnya]”
+            if (step.actions.includes("request") && nextStep) {
+                const nextDivision = divisions.find(
+                    (d) => d.id === parseInt(nextStep.division_id)
+                );
+                if (nextDivision) {
+                    finalActions.push(`request to ${nextDivision.name}`);
+                } else {
+                    finalActions.push("request to next step");
+                }
+            }
+
+            return { ...step, actions: finalActions };
+        });
+
+        const payload = { ...data, steps: stepsWithDynamicActions };
         const action = editingWorkflow
             ? route("workflows.update", editingWorkflow.id)
             : route("workflows.store");
-
         const request = editingWorkflow ? put : post;
+
         request(action, {
-            ...data,
+            data: payload,
             onSuccess: () => {
                 setShowModal(false);
                 setEditingWorkflow(null);
@@ -122,12 +138,15 @@ export default function Index({ auth, workflows, divisions, documents }) {
         });
     };
 
-    // === Steps handling ===
+    // === HANDLE STEPS ===
     const addStep = () =>
-        setData("steps", [...data.steps, { division_id: "" }]);
+        setData("steps", [...data.steps, { division_id: "", actions: [] }]);
+
     const removeStep = (index) => {
-        const newSteps = data.steps.filter((_, i) => i !== index);
-        setData("steps", newSteps);
+        setData(
+            "steps",
+            data.steps.filter((_, i) => i !== index)
+        );
     };
 
     // === UI ===
@@ -135,43 +154,36 @@ export default function Index({ auth, workflows, divisions, documents }) {
         <AuthenticatedLayout
             user={auth.user}
             header={
-                <h2 className="font-semibold text-xl text-gray-800 leading-tight">
-                    Workflow Management
-                </h2>
+                <h2 className="font-semibold text-xl">Workflow Management</h2>
             }
         >
             <Head title="Workflow Management" />
-
             <div className="flex min-h-screen bg-background relative">
                 <Sidebar />
-
                 <div className="py-12 w-full overflow-auto">
-                    <div className="flex flex-col gap-3 absolute top-5 ml-6">
-                        <h3 className="text-xl font-semibold">Workflows</h3>
-                    </div>
-
                     <div className="mx-auto p-6 lg:px-8">
                         <Card className="p-6 shadow-sm">
-                            {/* Filter & Add */}
-                            <div className="flex flex-col md:flex-row justify-between gap-3 mb-4">
-                                <div className="flex flex-col md:flex-row gap-2 w-full">
+                            {/* Filter */}
+                            <div className="flex flex-col md:flex-row justify-between mb-4 gap-2">
+                                <div className="flex gap-2">
                                     <Input
                                         placeholder="Search workflows..."
                                         value={filterText}
-                                        onChange={handleFilterText}
-                                        className="md:w-1/3 border border-gray-300"
+                                        onChange={(e) =>
+                                            setFilterText(e.target.value)
+                                        }
+                                        className="border border-gray-300"
                                         style={{ borderRadius: "8px" }}
                                     />
-
                                     <Select
                                         value={filterSelect}
-                                        onValueChange={handleFilterSelect}
+                                        onValueChange={setFilterSelect}
                                     >
                                         <SelectTrigger
-                                            className="md:w-1/5 border border-gray-300"
                                             style={{ borderRadius: "8px" }}
+                                            className="border border-gray-300"
                                         >
-                                            <SelectValue placeholder="Filter by document..." />
+                                            <SelectValue placeholder="Filter by document" />
                                         </SelectTrigger>
                                         <SelectContent>
                                             {documents.map((doc) => (
@@ -186,46 +198,10 @@ export default function Index({ auth, workflows, divisions, documents }) {
                                     </Select>
                                 </div>
 
-                                <Button
-                                    onClick={openCreateModal}
-                                    className="w-[180px] h-9 text-sm"
-                                    style={{ borderRadius: "8px" }}
-                                >
-                                    + Add New Workflow
+                                <Button onClick={openCreateModal}>
+                                    + Add Workflow
                                 </Button>
                             </div>
-
-                            {/* Active Filters */}
-                            {(filterSelect || filterText) && (
-                                <div className="flex flex-wrap gap-2 mb-6">
-                                    {filterSelect && (
-                                        <Badge
-                                            variant="secondary"
-                                            className="flex items-center gap-1 px-2 py-1 text-sm"
-                                        >
-                                            {filterSelect}
-                                            <X
-                                                size={14}
-                                                className="cursor-pointer hover:text-red-500"
-                                                onClick={clearSelectFilter}
-                                            />
-                                        </Badge>
-                                    )}
-                                    {filterText && (
-                                        <Badge
-                                            variant="secondary"
-                                            className="flex items-center gap-1 px-2 py-1 text-sm"
-                                        >
-                                            Search: {filterText}
-                                            <X
-                                                size={14}
-                                                className="cursor-pointer hover:text-red-500"
-                                                onClick={clearTextFilter}
-                                            />
-                                        </Badge>
-                                    )}
-                                </div>
-                            )}
 
                             {/* Table */}
                             <Table>
@@ -269,10 +245,6 @@ export default function Index({ auth, workflows, divisions, documents }) {
                                                                     wf
                                                                 )
                                                             }
-                                                            style={{
-                                                                borderRadius:
-                                                                    "10px",
-                                                            }}
                                                         >
                                                             Edit
                                                         </Button>
@@ -284,10 +256,6 @@ export default function Index({ auth, workflows, divisions, documents }) {
                                                                     wf.id
                                                                 )
                                                             }
-                                                            style={{
-                                                                borderRadius:
-                                                                    "10px",
-                                                            }}
                                                         >
                                                             Delete
                                                         </Button>
@@ -312,14 +280,14 @@ export default function Index({ auth, workflows, divisions, documents }) {
                 </div>
             </div>
 
-            {/* Modal Form */}
+            {/* Modal */}
             {showModal && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4">
                     <Card className="w-full max-w-lg p-6">
                         <h3 className="text-lg font-semibold mb-4">
                             {editingWorkflow
                                 ? "Edit Workflow"
-                                : "Create New Workflow"}
+                                : "Create Workflow"}
                         </h3>
                         <form onSubmit={handleSubmit}>
                             <div className="space-y-4">
@@ -331,11 +299,6 @@ export default function Index({ auth, workflows, divisions, documents }) {
                                             setData("name", e.target.value)
                                         }
                                     />
-                                    {errors.name && (
-                                        <p className="text-sm text-red-600">
-                                            {errors.name}
-                                        </p>
-                                    )}
                                 </div>
 
                                 <div>
@@ -382,48 +345,148 @@ export default function Index({ auth, workflows, divisions, documents }) {
 
                                 <div>
                                     <Label>Steps</Label>
-                                    {data.steps.map((step, i) => (
-                                        <div
-                                            key={i}
-                                            className="flex items-center gap-2 mb-2"
-                                        >
-                                            <Select
-                                                value={
-                                                    step.division_id?.toString() ||
-                                                    ""
-                                                }
-                                                onValueChange={(value) => {
-                                                    const updated = [
-                                                        ...data.steps,
-                                                    ];
-                                                    updated[i].division_id =
-                                                        parseInt(value);
-                                                    setData("steps", updated);
-                                                }}
+                                    {data.steps.map((step, i) => {
+                                        const nextDivisionName = data.steps[
+                                            i + 1
+                                        ]?.division_id
+                                            ? divisions.find(
+                                                  (d) =>
+                                                      d.id ===
+                                                      parseInt(
+                                                          data.steps[i + 1]
+                                                              .division_id
+                                                      )
+                                              )?.name
+                                            : "next step";
+
+                                        return (
+                                            <div
+                                                key={i}
+                                                className="flex flex-col gap-2 mb-4 border p-3 rounded-md"
                                             >
-                                                <SelectTrigger>
-                                                    <SelectValue placeholder="Select division" />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    {divisions.map((d) => (
-                                                        <SelectItem
-                                                            key={d.id}
-                                                            value={d.id.toString()}
-                                                        >
-                                                            {d.name}
-                                                        </SelectItem>
-                                                    ))}
-                                                </SelectContent>
-                                            </Select>
-                                            <Button
-                                                variant="destructive"
-                                                size="sm"
-                                                onClick={() => removeStep(i)}
-                                            >
-                                                Remove
-                                            </Button>
-                                        </div>
-                                    ))}
+                                                <div className="flex items-center gap-2">
+                                                    <Select
+                                                        value={
+                                                            step.division_id?.toString() ||
+                                                            ""
+                                                        }
+                                                        onValueChange={(
+                                                            value
+                                                        ) => {
+                                                            const updated = [
+                                                                ...data.steps,
+                                                            ];
+                                                            updated[
+                                                                i
+                                                            ].division_id =
+                                                                parseInt(value);
+                                                            setData(
+                                                                "steps",
+                                                                updated
+                                                            );
+                                                        }}
+                                                    >
+                                                        <SelectTrigger>
+                                                            <SelectValue placeholder="Select division" />
+                                                        </SelectTrigger>
+                                                        <SelectContent>
+                                                            {divisions.map(
+                                                                (d) => (
+                                                                    <SelectItem
+                                                                        key={
+                                                                            d.id
+                                                                        }
+                                                                        value={d.id.toString()}
+                                                                    >
+                                                                        {d.name}
+                                                                    </SelectItem>
+                                                                )
+                                                            )}
+                                                        </SelectContent>
+                                                    </Select>
+
+                                                    <Button
+                                                        variant="destructive"
+                                                        size="sm"
+                                                        onClick={() =>
+                                                            removeStep(i)
+                                                        }
+                                                    >
+                                                        Remove
+                                                    </Button>
+                                                </div>
+
+                                                <div>
+                                                    <div className="flex gap-4">
+                                                        {[
+                                                            "approve",
+                                                            "reject",
+                                                            "request_to",
+                                                        ].map((action) => (
+                                                            <label
+                                                                key={action}
+                                                                className="flex items-center gap-1"
+                                                            >
+                                                                <input
+                                                                    type="checkbox"
+                                                                    checked={step.actions.includes(
+                                                                        action
+                                                                    )}
+                                                                    onChange={(
+                                                                        e
+                                                                    ) => {
+                                                                        const updatedSteps =
+                                                                            [
+                                                                                ...data.steps,
+                                                                            ];
+                                                                        if (
+                                                                            e
+                                                                                .target
+                                                                                .checked
+                                                                        ) {
+                                                                            updatedSteps[
+                                                                                i
+                                                                            ].actions.push(
+                                                                                action
+                                                                            );
+                                                                        } else {
+                                                                            updatedSteps[
+                                                                                i
+                                                                            ].actions =
+                                                                                updatedSteps[
+                                                                                    i
+                                                                                ].actions.filter(
+                                                                                    (
+                                                                                        a
+                                                                                    ) =>
+                                                                                        a !==
+                                                                                        action
+                                                                                );
+                                                                        }
+                                                                        setData(
+                                                                            "steps",
+                                                                            updatedSteps
+                                                                        );
+                                                                    }}
+                                                                />
+                                                                {action ===
+                                                                "request_to"
+                                                                    ? "Request To Next Step"
+                                                                    : action
+                                                                          .charAt(
+                                                                              0
+                                                                          )
+                                                                          .toUpperCase() +
+                                                                      action.slice(
+                                                                          1
+                                                                      )}
+                                                            </label>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
                                     <Button
                                         variant="outline"
                                         size="sm"

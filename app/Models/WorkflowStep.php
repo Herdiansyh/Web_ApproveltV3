@@ -15,7 +15,7 @@ class WorkflowStep extends Model
         'division_id', 
         'step_order',
         'status', 
-        'note', 
+        'note', 'actions',
         'approved_at', 
         'approver_id'
     ];

@@ -64,6 +64,10 @@ Route::middleware('auth')->group(function () {
     Route::middleware(['auth'])->group(function () {
         Route::resource('submissions', SubmissionController::class)->only(['index', 'show']);
         Route::get('submissions/{submission}/file', [SubmissionController::class, 'file'])->name('submissions.file');
+        // web.php
+Route::post('/submissions/{submission}/request', [SubmissionController::class, 'request'])
+    ->name('submissions.request');
+
     });
 
     // Manager-only routes

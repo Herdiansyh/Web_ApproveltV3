@@ -14,7 +14,13 @@ import {
 } from "@/Components/ui/dropdown-menu";
 import PrimaryButton from "@/Components/PrimaryButton";
 
-export default function Show({ auth, submission, fileUrl, canApprove }) {
+export default function Show({
+    auth,
+    submission,
+    fileUrl,
+    canApprove,
+    currentStep,
+}) {
     const [showApproveModal, setShowApproveModal] = useState(false);
     const [showRejectModal, setShowRejectModal] = useState(false);
 
@@ -22,6 +28,7 @@ export default function Show({ auth, submission, fileUrl, canApprove }) {
         approval_note: "",
     });
 
+    // --- HANDLE ACTION BUTTONS ---
     const handleApprove = () => {
         post(route("submissions.approve", submission.id), {
             data: { approval_note: data.approval_note || "" },
@@ -83,6 +90,32 @@ export default function Show({ auth, submission, fileUrl, canApprove }) {
         });
     };
 
+    const handleCustomAction = (action) => {
+        Swal.fire({
+            title: "Konfirmasi",
+            text: `Lanjutkan action "${action}" untuk dokumen ini?`,
+            icon: "question",
+            showCancelButton: true,
+            confirmButtonText: "Ya",
+            cancelButtonText: "Batal",
+        }).then((result) => {
+            if (result.isConfirmed) {
+                post(route("submissions.customAction", submission.id), {
+                    data: { action },
+                    onSuccess: () => {
+                        Swal.fire({
+                            icon: "success",
+                            title: "Berhasil",
+                            text: `Action "${action}" telah dijalankan.`,
+                            confirmButtonText: "OK",
+                        }).then(() => window.location.reload());
+                    },
+                });
+            }
+        });
+    };
+
+    // --- RENDER ---
     return (
         <AuthenticatedLayout
             user={auth.user}
@@ -98,13 +131,12 @@ export default function Show({ auth, submission, fileUrl, canApprove }) {
                 <div className="py-12 w-full">
                     <div className="max-w-7xl mx-auto sm:px-6 lg:px-8">
                         <Card className="p-6">
+                            {/* HEADER INFO */}
                             <div className="mb-6 flex justify-between items-start">
                                 <div>
-                                    <div>
-                                        <h3 className="text-2xl font-bold mb-2">
-                                            {submission.title}
-                                        </h3>
-                                    </div>
+                                    <h3 className="text-2xl font-bold mb-2">
+                                        {submission.title}
+                                    </h3>
                                     <p className="text-gray-600">
                                         <span className="font-bold">
                                             Diajukan oleh:
@@ -156,7 +188,9 @@ export default function Show({ auth, submission, fileUrl, canApprove }) {
                                         </p>
                                     )}
                                 </div>
-                                <div className="flex flex-col gap-2 items-end ">
+
+                                {/* ACTION BUTTON */}
+                                <div className="flex flex-col gap-2 items-end">
                                     <PrimaryButton
                                         style={{ borderRadius: "15px" }}
                                         className="bg-primary !text-[0.6rem] text-primary-foreground hover:bg-primary/90"
@@ -173,12 +207,13 @@ export default function Show({ auth, submission, fileUrl, canApprove }) {
                                                 : "Unduh Dokumen"}
                                         </a>
                                     </PrimaryButton>
+
                                     {canApprove &&
                                         submission.status === "pending" && (
                                             <DropdownMenu>
                                                 <DropdownMenuTrigger asChild>
                                                     <Button
-                                                        className="max-w-20 h-6 tracking-wide  bg-blue-500 text-white"
+                                                        className="max-w-20 h-6 tracking-wide bg-blue-500 text-white"
                                                         style={{
                                                             borderRadius: "5px",
                                                         }}
@@ -196,37 +231,78 @@ export default function Show({ auth, submission, fileUrl, canApprove }) {
                                                         </div>
                                                     </Button>
                                                 </DropdownMenuTrigger>
+
                                                 <DropdownMenuContent
                                                     align="end"
-                                                    className="w-48"
+                                                    className="w-52"
                                                 >
-                                                    <DropdownMenuItem
-                                                        onClick={() =>
-                                                            setShowApproveModal(
-                                                                true
+                                                    {(
+                                                        currentStep?.actions ||
+                                                        []
+                                                    ).map((action, index) => {
+                                                        const a =
+                                                            action.toLowerCase();
+                                                        if (
+                                                            a.includes(
+                                                                "approve"
                                                             )
+                                                        ) {
+                                                            return (
+                                                                <DropdownMenuItem
+                                                                    key={index}
+                                                                    onClick={() =>
+                                                                        setShowApproveModal(
+                                                                            true
+                                                                        )
+                                                                    }
+                                                                    className="hover:text-green-700 cursor-pointer border-b border-gray-200"
+                                                                >
+                                                                    Setujui
+                                                                    Pengajuan
+                                                                </DropdownMenuItem>
+                                                            );
                                                         }
-                                                        className=" hover:text-green-700 cursor-pointer border-b border-gray-200"
-                                                    >
-                                                        Setujui Pengajuan
-                                                    </DropdownMenuItem>
-                                                    <DropdownMenuItem
-                                                        onClick={() =>
-                                                            setShowRejectModal(
-                                                                true
-                                                            )
+
+                                                        if (
+                                                            a.includes("reject")
+                                                        ) {
+                                                            return (
+                                                                <DropdownMenuItem
+                                                                    key={index}
+                                                                    onClick={() =>
+                                                                        setShowRejectModal(
+                                                                            true
+                                                                        )
+                                                                    }
+                                                                    className="hover:text-red-700 cursor-pointer border-b border-gray-200"
+                                                                >
+                                                                    Tolak
+                                                                    Pengajuan
+                                                                </DropdownMenuItem>
+                                                            );
                                                         }
-                                                        className=" hover:text-red-700 cursor-pointer"
-                                                    >
-                                                        Tolak Pengajuan
-                                                    </DropdownMenuItem>
+
+                                                        return (
+                                                            <DropdownMenuItem
+                                                                key={index}
+                                                                onClick={() =>
+                                                                    handleCustomAction(
+                                                                        action
+                                                                    )
+                                                                }
+                                                                className="hover:text-blue-700 cursor-pointer border-b border-gray-200"
+                                                            >
+                                                                {action}
+                                                            </DropdownMenuItem>
+                                                        );
+                                                    })}
                                                 </DropdownMenuContent>
                                             </DropdownMenu>
                                         )}
                                 </div>
                             </div>
 
-                            {/* Approve Modal */}
+                            {/* APPROVE MODAL */}
                             {showApproveModal && (
                                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
                                     <Card className="w-full max-w-md p-6">
@@ -268,7 +344,7 @@ export default function Show({ auth, submission, fileUrl, canApprove }) {
                                 </div>
                             )}
 
-                            {/* Reject Modal */}
+                            {/* REJECT MODAL */}
                             {showRejectModal && (
                                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
                                     <Card className="w-full max-w-md p-6">
@@ -312,7 +388,7 @@ export default function Show({ auth, submission, fileUrl, canApprove }) {
                                 </div>
                             )}
 
-                            {/* PDF Viewer */}
+                            {/* PDF VIEWER */}
                             <div className="mb-6">
                                 <object
                                     data={fileUrl}

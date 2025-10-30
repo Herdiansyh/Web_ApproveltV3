@@ -139,35 +139,93 @@ class SubmissionController extends Controller
     /** ------------------------
      *  DETAIL PENGAJUAN
      *  ------------------------ */
-  public function show(Submission $submission)
+public function show(Submission $submission)
 {
     $this->authorize('view', $submission);
 
-    // Load relasi user, division, workflow dan semua langkah dengan division
-    $submission->load(['user.division', 'workflow.document', 'workflowSteps.division']);
+    // 🔹 Muat relasi yang dibutuhkan
+    $submission->load([
+        'user.division',
+        'workflow.document',
+        'workflowSteps.division',
+        'workflow.steps.division',
+    ]);
 
-    // Ambil semua step
+    // 🔹 Ambil semua step submission yang sudah dibuat
     $steps = $submission->workflowSteps()->orderBy('step_order')->get();
 
-    // Step saat ini
+    // 🔹 Step aktif saat ini
     $currentStep = $steps->firstWhere('step_order', $submission->current_step);
 
+    // 🔹 Ambil user login
     $user = Auth::user();
+
+    // 🔹 Apakah user berhak melakukan aksi?
     $canApprove = $currentStep &&
         $currentStep->division_id === $user->division_id &&
         $submission->status === 'pending';
 
+    // 🔹 Ambil definisi workflow step dari workflow master (bukan submission_workflow_steps)
+    $workflowStep = $submission->workflow->steps
+        ->where('step_order', $submission->current_step)
+        ->first();
+
+    // 🔹 Ambil daftar actions dari workflow_steps kolom JSON
+    $actions = [];
+    if ($workflowStep && !empty($workflowStep->actions)) {
+        try {
+            $decoded = json_decode($workflowStep->actions, true);
+            $actions = is_array($decoded) ? $decoded : [];
+        } catch (\Throwable $th) {
+            $actions = [];
+        }
+    }
+
+    // 🔹 Tambahkan actions langsung ke currentStep agar bisa diakses di React
+    if ($currentStep) {
+        $currentStep->actions = $actions;
+    }
+
+    // 🔹 Pastikan file bisa diakses
+    $fileUrl = route('submissions.file', $submission->id);
+    $fileExists = Storage::disk('private')->exists($submission->file_path);
+
     return Inertia::render('Submissions/Show', [
         'submission' => $submission,
-        'workflowSteps' => $steps,          // Kirim steps ke frontend
-        'currentStep' => $currentStep,      // Kirim step saat ini
-        'canApprove' => $canApprove,
-        'fileUrl' => route('submissions.file', $submission->id),
-        'signedFileExists' => $submission->status === 'approved' &&
-            Storage::disk('private')->exists($submission->file_path),
+        'workflowSteps' => $steps,     // Semua langkah workflow
+        'currentStep' => $currentStep, // Step aktif
+        'canApprove' => $canApprove,   // Hak akses user
+        'fileUrl' => $fileUrl,
+        'fileExists' => $fileExists,
     ]);
 }
 
+
+
+// SubmissionController.php
+public function request(Request $request, Submission $submission)
+{
+    $this->authorize('view', $submission);
+    $action = $request->input('action');
+    $user = Auth::user();
+
+    $currentStep = $submission->workflowSteps()
+        ->where('step_order', $submission->current_step)
+        ->first();
+
+    if (!$currentStep || $currentStep->division_id !== $user->division_id) {
+        abort(403, 'Anda tidak berhak melakukan aksi pada dokumen ini.');
+    }
+
+    // contoh logika: lanjutkan ke step berikut
+    $maxStepOrder = $submission->workflowSteps()->max('step_order');
+    if ($submission->current_step < $maxStepOrder) {
+        $submission->current_step += 1;
+        $submission->save();
+    }
+
+    return back()->with('success', 'Permintaan berhasil dikirim.');
+}
 
     /** ------------------------
      *  VIEW FILE
